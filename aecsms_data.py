@@ -7,7 +7,7 @@ delete) interface to AECSMS database.
 The various tables in the database to interface include:
 
 Access, Staff, Student, Course, ExamResult, 
-Property, Level, Department, and Subject. ## Remove
+Property, Level, Department, and Subject.
 
 The api will also initialize the database before any 
 transactions take place and commit changes to the 
@@ -22,8 +22,7 @@ Copyright : (c) Phelsy Inc. 2019
 """
 
 import sqlite3 as sql
-import wx 
-import aecsms_utils as utils
+import wx
 
 
 db = None
@@ -32,7 +31,7 @@ cursor = None
 ############################################
 # Functions for creating various entities ##
 ############################################
-
+'''
 def reg_access(access_id,user_id,username,passphrase):
  	# Function for registering admin.
  	try:
@@ -48,7 +47,7 @@ def reg_access(access_id,user_id,username,passphrase):
 
  	except Exception as error:
  		raise ValueError('Staff ID Incorrect.\n Contact System Administrator')
-
+'''
 
 def reg_student(new_student_data):
 	
@@ -59,8 +58,9 @@ def reg_student(new_student_data):
 	values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
  	"""
  	name,sex,age,addr,num,sch,email,dob,g_name,g_num,g_mail,course,level,adm_date = new_student_data 
-
+ 	initDB()
  	cursor.execute(query,(name,sex,age,addr,num,sch,email,dob,g_name,g_num,g_mail,course,level,adm_date))
+ 	closeDB()
 
 def reg_staff(staff_data):
 
@@ -113,8 +113,7 @@ def reg_level(level_details):
 def reg_department(name):
 	# Function for registering school department
 	query = """
-	insert into Department (Name)
-	values (?)
+	insert into Department (Name) values (?)
 	"""
 	cursor.execute(query, (name))
 
@@ -158,12 +157,10 @@ def get_students():
 def get_student(student_id):
 	# Function for getting a student's details.
 	query = """
-	select Name,Gender,Phone,Email,Address,DateOfBirth,GuardianName,GuardianPhone,
-	GuardianProfession,GuardianPlaceOfWork,CourseID,StudentLevel,photo,AdmissionDate,
-	CompletionDate,Remarks from staff
-	where ID = ?
+	select * from student where ID = ?
  	"""
-	return cursor.execute(query, (student_id,)).fetchall()[0]
+	result = cursor.execute(query, (student_id,)).fetchall()[0]
+	return result
 
 def get_student_min_details():
 	# Funtion for getting minute student details.
@@ -296,42 +293,37 @@ def update_staff(staff_id, name=None,gender=None,address=None,photo=None,date_of
 	return cursor.execute(query,(name,gender,address,photo,date_of_hiring,years_of_service,
 						  department_id,category,specialty,salary,phone,email))
 
-def update_Student(student_id,name=None,gender=None, phone=None,email=None,address=None, 
-	 			birth_date=None,guardian_name=None,guardian_phone=None,guardian_email=None,
-	 			guardian_profession=None,guardian_place_of_work=None,
-	 			course_id=None,student_level=None,photo=None, enrollment_date=None, 
-	 			completion_date=None,remarks=None):
+def update_Student(student):
 	# Function for making changes to a student's details.
 	query = """
 	update Student 
-	set ID,Name = ?,Gender = ?,Phone = ?,Email = ?,Address = ?,DateOfBirth = ?,
-	GuardianName = ?,GuardianPhone = ?,GuardianEmail = ?,GuardianProfession = ?,
-	GuardianPlaceOfWork = ?,CourseID = ?,StudentLevel = ?,photo = ?,AdmissionDate = ?,
-	CompletionDate = ?,Remarks = ?
+	# set Name = ?,Gender =?,Age=?,Address=?,Phone=?,SchAttended=?,Email=?,DateOfBirth=?,
+ 	GuardianName=?,GuardianPhone=?,GuardianEmail=?,Course=?,StudentLevel=?,AdmissionDate=?
+	where ID  = ?
  	"""
-	student_data = get_student(student_id)
+
+	stu_id,name,sex,age,addr,num,sch,email,dob,g_name,g_num,g_mail,cse,lvl,adm_date = student
+
+	student_data = get_student(stu_id)
 
 	if not name : name = student_data[0]
-	if not gender : gender = student_data[1]
-	if not phone : phone = student_data[2]
-	if not email : email = student_data[3]
-	if not address : address = student_data[4] 
-	if not birth_date : birth_date = student_data[5]
-	if not guardian_name : guardian_name = student_data[6]
-	if not guardian_phone : guardian_phone = student_data[7]
-	if not guardian_email : guardian_email = student_data
-	if not guardian_profession : guardian_profession = student_data[8]
-	if not guardian_place_of_work : guardian_place_of_work = student_data[9]
-	if not course_id : course_id = student_data[10]
-	if not student_id : student_id = student_data[11]
-	if not photo : photo = student_data[12]
-	if not enrollment_date : enrollment_date = student_data[13]
-	if not completion_date : completion_date = student_data[14]
-	if not remarks : remarks = student_data[15]
-
-	return cursor.execute(query, (name,gender,phone,email,address,birth_date,
-		guardian_name,guardian_phone,guardian_profession,guardian_place_of_work,course_id,
-		student_id,photo,enrollment_date,completion_date,remarks))
+	if not sex : sex = student_data[1]
+	if not age : age = student_data[2]
+	if not addr : addr = student_data[3]
+	if not num : num = student_data[4]
+	if not sch : sch = student_data[5]
+	if not email : email = student_data[6] 
+	if not dob : dob = student_data[5]
+	if not g_name : g_name = student_data[7]
+	if not g_num : g_num = student_data[8]
+	if not g_mail : g_mail = student_data[9]
+	if not cse : cse = student_data[10]
+	if not lvl : lvl = student_data[10]
+	if not adm_date : adm_date = student_data[11]
+	
+	initDB()
+	cursor.execute(query, (name,sex,age,addr,num,sch,email,dob,g_name,g_num,g_mail,cse,lvl,adm_date))
+	closeDB()
 
 def update_course(course_id, name=None, course_level = None,instructor=None, fee=None, status=None):
 	# Function for making changes to a staff member's details.
@@ -430,7 +422,9 @@ def del_student(student_id):
 	delete from Student 
 	where id = ?
  	"""
+	initDB()
 	cursor.execute(query, (student_id,))
+	closeDB()
 
 def del_course(course_id):
 	# Function for deleting a course.
