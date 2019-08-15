@@ -174,7 +174,7 @@ def send_sms(recipient, message):
 
 	acctSID = '' # Account Subscriber ID
 	authToken = '' # Authentication Token
-	twilioNum = '+12055499017' # the schools twilio api number
+	twilioNum = '' # your twilio api number
 
 	# This list should contain contacts of sms recipients 
 	recipients = []
