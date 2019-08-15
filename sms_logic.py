@@ -172,8 +172,8 @@ def send_sms(recipient, message):
 	# You should modify these presets to able
 	# to use the twilio api service
 
-	acctSID = 'AC41b6d0053f937ecaf0eaf4557db45a8f' # Account Subscriber ID
-	authToken = '41518d4bfa7c8ea73f768ae29d04b42f' # Authentication Token
+	acctSID = '' # Account Subscriber ID
+	authToken = '' # Authentication Token
 	twilioNum = '+12055499017' # the schools twilio api number
 
 	# This list should contain contacts of sms recipients 
