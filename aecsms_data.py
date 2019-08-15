@@ -86,15 +86,24 @@ def reg_course(course_details):
 def reg_exam(examname, coursename):
 	# Function for registering an exam.
 	query = """insert into Exam (ExamName, CourseName) values (?,?)"""
+	
+	initDB()
 	cursor.execute(query,(examname, coursename))
+	closeDB()
 
-def reg_exam_result(student_id, exam_id, exam_date, result):
-	# Function for saving student exam results.
+def reg_pdf_exam_result(result_data):
+	# Function for saving student pdf exam results.
+
 	query = """
-	insert into ExamResult (StudentID, ExamID, ExamDate, Result)
+	insert into ExamResults (StudentID, ExamName, ExamDate, Result)
 	values (?,?,?,?)
  	"""
-	cursor.execute(query, (student_id, exam_id, exam_date, result)) 
+ 	
+	stu_id, exam_name, exam_date, result = result_data
+	
+	initDB()
+	cursor.execute(query, (stu_id, exam_name, exam_date, result)) 
+	closeDB()
 
 def reg_property(description, name, condition):
 	# Function for registering a school property.
@@ -150,9 +159,10 @@ def get_staff_member(staff_id):
 def get_students():
 	# Function for getting details on all students.
 	query = """
-	select * from Student 
- 	"""
-	return cursor.execute(query).fetchall()[0:]
+			select * from Student 
+			"""
+	result = cursor.execute(query).fetchall()[0:]
+	return result
 
 def get_student(student_id):
 	# Function for getting a student's details.
@@ -162,12 +172,12 @@ def get_student(student_id):
 	result = cursor.execute(query, (student_id,)).fetchall()[0]
 	return result
 
-def get_student_min_details():
+def get_student_min_details(stu_id):
 	# Funtion for getting minute student details.
 	query = """select ID, Name, Phone, Email, GuadianEmail, 
 	CourseID, photo from Student"""
 	
-	details = cursor.execute(query).fetchall()[0:]
+	details = cursor.execute(query, (stu_id)).fetchall()[0:]
 	return details
 
 def get_courses():
@@ -198,13 +208,16 @@ def get_access(username):
 	except Exception as error:
 		raise ValueError('User not found')
 
-########## FIXME! FIXME! FIXME! FIXME! FIXME! ###############
-def get_student_exam_result(student_id, exam_id):
+def get_student_exam_result(student_name, exam_name):
 	# Function for getting a student's exam results.
 	query = """
-	select Result from ExamResult where student_id = ?  and exam_id = ?
+	select Result from ExamResults where StudentID = ?  and examName = ?
+	limit 1
  	"""
-	return cursor.execute(query, (student_id,exam_id,)).fetchall()[0]
+
+	initDB()
+	return cursor.execute(query, (student_name,exam_name,)).fetchone()[0]
+	closeDB()
 
 ########## FIXME! FIXME! FIXME! FIXME! FIXME! ###############
 def get_students_results(students_level, course_id, exam_id):

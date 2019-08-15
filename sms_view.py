@@ -595,7 +595,7 @@ class AecsmsFrame(wx.Frame):
 		super(AecsmsFrame, self).__init__(parent, title=title)
 
 		# Set an application icon
-		self.SetIcon(wx.Icon('images/sch_icon.png'))
+		self.SetIcon(wx.Icon('images/aec_icon.png'))
 		self.SetInitialSize((950, 600))
 		# self.SetTransparent(90)
 
@@ -605,7 +605,7 @@ class AecsmsFrame(wx.Frame):
 		wx.SystemOptions.SetOption("msw.display.directdraw",1)
 		# wx.SystemOptions.SetOption("mac.window-plain-transition", 1)
 
-		box = wx.BoxSizer(wx.VERTICAL)
+		box = wx.BoxSizer(wx.HORIZONTAL)
 		
 		filemenu= wx.Menu()
 		filemenu.Append(wx.ID_ANY, "E&xit"," Terminate the program")
@@ -622,9 +622,9 @@ class AecsmsFrame(wx.Frame):
 
 		# self.Bind(wx.EVT_MENU, self.OnExit)
 
-		icon_size = (5,5)
+		icon_size = (10,10)
 
-		toolbar = wx.ToolBar(self, style=wx.TB_HORIZONTAL| wx.TB_TEXT)
+		toolbar = wx.ToolBar(self, style=wx.TB_VERTICAL| wx.TB_TEXT |wx.TB_NODIVIDER)
 		toolbar.SetToolBitmapSize(icon_size)
 		toolbar.AddTool(10, 'Home', wx.Bitmap('images/usr1.png'), shortHelp='Go to Main Page')
 		toolbar.AddTool(20, 'Students', wx.Bitmap('images/people.png'), shortHelp='Students')
@@ -683,7 +683,7 @@ powered by Phelsy
 		'''
 		info = wx.adv.AboutDialogInfo()
 
-		info.SetIcon(wx.Icon('images/sch_icon.png'))
+		info.SetIcon(wx.Icon('images/aec_icon.png'))
 		info.SetName('AECSMS')
 		info.SetVersion('1.0')
 		info.SetDescription(description)
@@ -699,10 +699,10 @@ powered by Phelsy
 
 class AecsmsInitScreen(SplashScreen):
 	def __init__(self):
-		bmp = wx.Bitmap('images/board.png')
-		SplashScreen.__init__(self, bmp, wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT,1000, None, -1)
+		bmp = wx.Bitmap('images/aec_logo.jpg')
+		SplashScreen.__init__(self, bmp, wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT,5000, None, -1)
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
-		self.fc = wx.CallLater(1500, self.ShowMain)
+		self.fc = wx.CallLater(6500, self.ShowMain)
 
 	def OnClose(self, evt):
 		# Make sure the default handler runs too so this window gets
