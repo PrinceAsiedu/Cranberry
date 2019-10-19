@@ -1,4 +1,4 @@
-# Cranberry ![Tux](cherrytree.png)
+# Cranberry
 
 ![Tux](cr3.png)
 ### Cranberry school management software is one of the best things to ever happen to school administrators.
