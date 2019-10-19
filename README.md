@@ -1,5 +1,6 @@
 ![Tux](cr3.png)
-***
+
+
 ### Cranberry school management software is one of the best things to ever happen to school administrators.
 
 Cranberry is a **robust** and yet **simple** school management software which 
