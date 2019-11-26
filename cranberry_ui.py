@@ -26,6 +26,7 @@ from datetime import datetime as date
 from wx.adv import SplashScreen
 from wx.adv import TaskBarIcon
 from wx.lib.platebtn import PlateButton as pbtn
+from wx.lib.filebrowsebutton import FileBrowseButton as fbtn
 
 description = '''
 Cranberry School Management System is an advanced school management system for
@@ -111,7 +112,7 @@ class StaffPanel(wx.Panel):
 
 class StudentForm(sc.SizedDialog):
     def __init__(self, parent):
-        FLAGS = (wx.CAPTION | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.CLOSE_BOX | wx.RESIZE_BORDER)
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
 
         sc.SizedDialog.__init__(self, None, -1, "Student Registration", style=FLAGS)
         cPane = self.GetContentsPane()
@@ -190,7 +191,8 @@ class StudentForm(sc.SizedDialog):
 				txt = 'There was an error while loading photo!\n\n%s\nDo you want to try again?'
 				msg = wx.MessageBox(txt % str(error),'Error',wx.YES_NO)
 				if msg == wx.Yes: pass
-				else: Close()"""
+				else: Close()
+    """
 
 
 class StudentPanel(wx.Panel):
@@ -208,9 +210,8 @@ class StudentPanel(wx.Panel):
 
         cw = 100
         columns = [('ID', cw), ('Firstname', cw), ('Lastname', cw), ('Gender', cw),
-                   ('Date of Birth', 120), ('Phone', cw), ('Email', cw),
-                   ('Address', cw), ('Addmission Date', 130)
-                   ]  # ('Level',cw),('Course', cw),
+                   ('Date of Birth', 120), ('Level',cw), ('Parent',cw),('Phone', cw),
+                   ('Email', cw),('Address', cw), ('Addmission Date', 130)]
 
         col_num = 0
         for column in columns:
@@ -221,7 +222,13 @@ class StudentPanel(wx.Panel):
         studs = studs.all_students()
 
         for st in studs:
-            stud = [st.sid, st.firstname, st.lastname, st.gender, '', st.phone, st.email, st.address, '']
+            stud = [st.sid, st.firstname, st.lastname, 
+                    st.gender, st.dob, st.level,
+                    st.parent, st.phone, st.email, 
+                    st.address, st.adate
+                ]
+
+
             self.dvlc.AppendItem(stud)
 
         self.main_sizer.Add(self.dvlc, 1, wx.EXPAND)
@@ -295,25 +302,53 @@ class StudentPanel(wx.Panel):
                                       lvl=lv, adate=ad)
             save.add_student()
 
+            self.append_student()
+
             notify = adv.NotificationMessage(
                 title="Student Registration Successful",
                 message="%s is now enrolled\nin Your School!" % str(fn + ' ' + ln),
                 parent=None, flags=wx.ICON_INFORMATION)
             notify.Show(timeout=20)
+        
         except Exception as error:
-            notify = adv.NotificationMessage(
+            raise error
+            '''notify = adv.NotificationMessage(
                 title="Student Registration Unsuccessful",
                 message="%s could not be enrolled\nin Your School!\n%s " % (str(fn + ' ' + ln), str(error)),
                 parent=None, flags=wx.ICON_ERROR)
-            notify.Show(timeout=20)
+            notify.Show(timeout=20)'''
+
+    def append_student(self):
+        st = Controller.Student().fetch_new_student()
+        student_data = [st.sid, st.firstname, st.lastname, 
+                        st.gender, st.dob, st.level,
+                        st.parent, st.phone, st.email, 
+                        st.address, st.adate
+                        
+                        ]
+        self.dvlc.AppendItem(student_data)
 
     def OnRemoveStudent(self, event):
-        notify = adv.NotificationMessage(
-            title="Student Update Information",
-            message="Example Student Is No Longer Enrolled\nin Your School!",
-            parent=None, flags=wx.ICON_INFORMATION)
-        notify.Show(timeout=20)
+        try:
+            row = 1
+            row += self.dvlc.GetSelectedRow()
+            f = self.dvlc.RowToItem(row)
 
+            notify = adv.NotificationMessage(
+                title="Student Update Information",
+                # message="Example Student Is No Longer Enrolled\nin Your School!",
+                message='Row Num is %s' % row,
+                parent=None, flags=wx.ICON_INFORMATION)
+            notify.Show(timeout=20)
+
+        except Exception as error:
+
+            notify = adv.NotificationMessage(
+                title="Student Update Information",
+                message="Error Removing Student From Database!",
+                parent=None, flags=wx.ICON_INFORMATION)
+            notify.Show(timeout=20)
+    
     def OnEditStudent(self, event):
         pass
 
@@ -421,7 +456,7 @@ class StatBar(wx.StatusBar):
 
     def _notify(self):
         t = time.localtime(time.time())
-        st = time.strftime("%a %b,%Y \t\t\t\t %X %p", t)
+        st = time.strftime("%a %b %Y \t\t\t\t %X %p", t)
         self.SetStatusText(st, 1)
 
 
@@ -480,6 +515,70 @@ class CranTaskBarIcon(TaskBarIcon):
     def OnTaskBarClose(self, event):
         wx.CallAfter(self.frame.Close)
 
+class SmsPad(sc.SizedDialog):
+    def __init__(self, parent):
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
+
+        sc.SizedDialog.__init__(self, None, -1, 'SMS', size=(400, 305), style=FLAGS)
+        cPane = self.GetContentsPane()
+        pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
+        pane.SetSizerProps(expand=True, proportion=1)
+        pane.SetSizerType("vertical")
+
+        font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
+
+        rec_lbl = wx.StaticText(pane, -1, 'Reciepient\'s phone number')
+        rec_lbl.SetFont(font)
+        self.receipient = wx.TextCtrl(pane, -1, value="", style=wx.TE_PROCESS_ENTER)
+        self.receipient.SetFocus()
+        self.receipient.SetSizerProps(expand=True)
+        self.receipient.SetFont(font)
+
+        bd_lbl = wx.StaticText(pane, -1, 'Message Body')
+        bd_lbl.SetFont(font)
+        self.body = wx.TextCtrl(pane, -1, size=(-1,110), style=wx.TE_MULTILINE)
+        self.body.SetSizerProps(expand=True)
+        self.body.SetFont(font)
+
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        
+
+class MailPad(sc.SizedDialog):
+    def __init__(self, parent):
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
+
+        sc.SizedDialog.__init__(self, None, -1, 'Mail', size=(500, 350), style=FLAGS)
+        cPane = self.GetContentsPane()
+        pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
+        pane.SetSizerProps(expand=True, proportion=1)
+        pane.SetSizerType("vertical")
+
+        font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
+
+        rec_lbl = wx.StaticText(pane, -1, 'Reciepient\' email address')
+        rec_lbl.SetFont(font)
+
+        self.receipient = wx.TextCtrl(pane, -1, value="", style=wx.TE_PROCESS_ENTER)
+        self.receipient.SetFocus()
+        self.receipient.SetSizerProps(expand=True)
+        self.receipient.SetFont(font)
+
+        sub_lbl = wx.StaticText(pane, -1, 'Subject')
+        sub_lbl.SetFont(font)
+
+        self.subject = wx.TextCtrl(pane, -1, value='', style=wx.TE_PROCESS_ENTER)
+        self.subject.SetSizerProps(expand=True)
+        self.subject.SetFont(font)
+
+        bd_lbl = wx.StaticText(pane, -1, 'Message Body')
+        bd_lbl.SetFont(font)
+        self.body = wx.TextCtrl(pane, -1, size=(-1,110), style=wx.TE_MULTILINE)
+        self.body.SetSizerProps(expand=True)
+        self.body.SetFont(font)
+
+        self.attach = fbtn(pane, -1, buttonText='Add an Attachment')
+
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
 
 class AppFrame(wx.Frame):
     def __init__(self, parent, title=''):
@@ -489,7 +588,7 @@ class AppFrame(wx.Frame):
         # Control some system options.
         wx.SystemOptions.SetOption("msw.remap", 2)
         wx.SystemOptions.SetOption("msw.notebook.themed-background", 1)
-        wx.SystemOptions.SetOption("msw.display.directdraw", 1)
+        wx.SystemOptions.SetOption("msw.display.directdraw", 0)
 
         self.Bind(wx.EVT_CLOSE, self.OnAppExit)
 
@@ -521,22 +620,34 @@ class AppFrame(wx.Frame):
 
         toolbar = wx.ToolBar(cpl, style=wx.TB_VERTICAL | wx.TB_TEXT | wx.TB_NODIVIDER)
         toolbar.SetToolBitmapSize(icon_size)
-        toolbar.AddTool(10, 'Home', wx.Bitmap(img_dir + '1out.png'), shortHelp='Go to Main Page')
+        toolbar.AddTool(10, 'Home', wx.Bitmap(img_dir + '7out.png'), shortHelp='Go to Main Page')
         toolbar.AddTool(20, 'Students', wx.Bitmap(img_dir + '2out.png'), shortHelp='Students')
-        toolbar.AddTool(40, 'Instructors', wx.Bitmap(img_dir + '3out.png'), shortHelp='Instructors')
-        toolbar.AddTool(80, 'Books', wx.Bitmap(img_dir + '4out.png'), shortHelp='Books')
-        toolbar.AddTool(30, 'Exams', wx.Bitmap(img_dir + '6out.png'), shortHelp='Student Exams')
-        toolbar.AddTool(50, 'Email', wx.Bitmap(img_dir + '8out.png'), shortHelp='Send Student Reports')
-        toolbar.AddTool(60, 'Reports', wx.Bitmap(img_dir + '10out.png'), shortHelp='Generate Student Reports')
-        toolbar.AddTool(90, 'Info', wx.Bitmap(img_dir + '11out.png'), shortHelp='Program Information')
-        toolbar.AddTool(70, 'Log Out', wx.Bitmap(img_dir + '12out.png'), shortHelp='Sign out of Cranberry')
+        toolbar.AddTool(30, 'Instructors', wx.Bitmap(img_dir + '3out.png'), shortHelp='Instructors')
+        toolbar.AddTool(40, 'Books', wx.Bitmap(img_dir + '4out.png'), shortHelp='Books')
+        toolbar.AddTool(50, 'SMS', wx.Bitmap(img_dir + '5out.png'), shortHelp='Send a text message.')
+        toolbar.AddTool(60, 'Email', wx.Bitmap(img_dir + '6out.png'), shortHelp='Send a mail.')
+        toolbar.AddTool(70, 'Reports', wx.Bitmap(img_dir + '10out.png'), shortHelp='Generate Student Reports')
+        toolbar.AddTool(80, 'Info', wx.Bitmap(img_dir + '11out.png'), shortHelp='Program Information')
+        toolbar.AddTool(90, 'Log Out', wx.Bitmap(img_dir + '12out.png'), shortHelp='Sign out of Cranberry')
         toolbar.SetToolPacking(10)
 
         toolbar.Realize()
 
+        # Bind some event handlers to toolbar
+        #self.Bind(wx.EVT_TOOL, func, id=10)
+        #self.Bind(wx.EVT_TOOL, func, id=20)
+        #self.Bind(wx.EVT_TOOL, func, id=30)
+        #self.Bind(wx.EVT_TOOL, func, id=40)
+        self.Bind(wx.EVT_TOOL, self.OnSms, id=50)
+        self.Bind(wx.EVT_TOOL, self.OnMail, id=60)
+        #self.Bind(wx.EVT_TOOL, func, id=70)
+        #self.Bind(wx.EVT_TOOL, func, id=80)
+        #self.Bind(wx.EVT_TOOL, func, id=90)
+
         self.Centre(wx.BOTH)
 
-        tab_style = (wx.lib.agw.aui.auibook.AUI_NB_SMART_TABS | wx.lib.agw.aui.auibook.AUI_NB_NO_TAB_FOCUS)
+        tab_style = (wx.lib.agw.aui.auibook.AUI_NB_SMART_TABS | wx.lib.agw.aui.auibook.AUI_NB_NO_TAB_FOCUS)#|
+        #  wx.lib.agw.aui.auibook.AUI_NB_TAB_FIXED_WIDTH)
 
         self.nb = nb = agw.auibook.AuiNotebook(cpl, agwStyle=tab_style)
         nb.SetArtProvider(agw.ChromeTabArt())
@@ -546,7 +657,7 @@ class AppFrame(wx.Frame):
                  (StudentPanel(nb), "Student"),
                  (CoursePanel(nb), "Courses"),
                  (AttendancePanel(nb), "Attendance"),
-                 (FeePanel(nb), 'Fee Management'),
+                 (FeePanel(nb), 'Fees'),
                  (InventoryPanel(nb), 'Inventory'),
                  (ReportPanel(nb), 'Reports')
                  ]
@@ -558,7 +669,7 @@ class AppFrame(wx.Frame):
 
         # Add a search box to the right panel
         self.searchBox = sbox = wx.SearchCtrl(rpnl, style=wx.TE_PROCESS_ENTER)
-        sbox.ShowCancelButton(True)
+        sbox.ShowCancelButton(False)
         sbox.Bind(wx.EVT_SEARCHCTRL_CANCEL_BTN, lambda e: sbox.SetValue(''))
 
         # Add a event calendar to the right panel
@@ -613,6 +724,72 @@ class AppFrame(wx.Frame):
     def BuildStatusBar(self):
         self.st_bar = sb = StatBar(self)
         self.SetStatusBar(sb)
+    
+    def OnSms(self, event):
+      with SmsPad(self) as form_dlg:  # Form dialog as a context manager
+            form_dlg.CenterOnScreen()
+            if form_dlg.ShowModal() == wx.ID_OK:
+                # try to collect and send text msg information here
+              self.SendSms(form_dlg)
+            else:
+                # Dismiss the form dialog
+                form_dlg.Destroy()
+    
+    def SendSms(self, dialog):
+
+        try:
+            receiver = dialog.receipient.GetValue()
+            body = dialog.body.GetValue()
+        
+            sender = Controller.TextMessenger()
+            sender.send_sms(receiver, body)
+            notify = adv.NotificationMessage(
+                title="Text Message",
+                message="Text message has been sent to \n%s" % receiver,
+                parent=None, flags=wx.ICON_INFORMATION)
+            notify.Show(timeout=40)
+
+        except Exception as error:
+            notify = adv.NotificationMessage(
+                title="Text Message",
+                message="Text message not sent!",
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=40)
+            print(str(error))
+    
+    def OnMail(self, event):
+        with MailPad(self) as form_dlg:  # Form dialog as a context manager
+            form_dlg.CenterOnScreen()
+            if form_dlg.ShowModal() == wx.ID_OK:
+                # try to collect and send text msg information here
+              self.SendMail(form_dlg)
+            else:
+                # Dismiss the form dialog
+                form_dlg.Destroy()
+
+    def SendMail(self, dialog):
+        try:
+            subject = dialog.subject.GetValue()
+            receiver = dialog.receipient.GetValue()
+            body = dialog.body.GetValue()
+            attachments = []
+            file = dialog.attach.GetValue()
+            attachments.append(file)
+        
+            Controller.MailSender(receiver, subject, body, attachments)
+            notify = adv.NotificationMessage(
+                title="Email",
+                message="Mail sent to \n%s" % receiver,
+                parent=None, flags=wx.ICON_INFORMATION)
+            notify.Show(timeout=40)
+
+        except Exception as error:
+            notify = adv.NotificationMessage(
+                title="Text Message",
+                message=f"Text message not sent! {str(error)}",
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=40)
+    
 
     def OnAppExit(self, event):
         self.mgr.UnInit()

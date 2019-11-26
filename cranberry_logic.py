@@ -1,8 +1,15 @@
 # cranberry_logic.py
-
-from datetime import datetime as PyDate
+import os
+import wx
+from datetime import datetime
 import cranberry_data as model
 from cranerror import CranRuntimeError, CranError
+
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
+def load_app_config():
+	pass
 
 class Student():
 	def __init__(self, fname='', lname='',sex='',bd='',parent='',num='',mail='',addr='',lvl='',adate=''):
@@ -36,12 +43,15 @@ class Student():
 
 	def wxdate2pydate(self, date):
 
-		# Convert wx.DateTime objects to 
-		# datetime.datetime objects.
+		# Convert wx.DateTime objects to datetime.datetime objects.
 		try:
-			date = date.Format('%a, %B %d, %Y')
-			date = PyDate.strptime(date, '%a, %B %d, %Y')
-			return date
+			assert isinstance(date, wx.DateTime)
+			if date.IsValid():
+				wxtime = date.Format('%d/%m/%y')
+				pytime = datetime.strptime(wxtime, '%d/%m/%y')
+				return pytime
+
+			else: return None
 		
 		except Exception as error:
 			raise error
@@ -82,6 +92,11 @@ class Student():
 			student = []
 			return student
 
+	def fetch_new_student(self):
+		students = self.all_students()
+		student = students.pop()
+		return student
+
 	def delete_student(self, sid):
 		try:
 			if sid:
@@ -105,6 +120,68 @@ class Student():
 
 		except Exception as error:
 			pass
+
+# -------------------------------------------------------------------------
+# Here lies a number of little beasts to make my runtime powerful
+#--------------------------------------------------------------------------
+
+class TextMessenger:
+	
+	def send_sms(self, rec, message):
+		# Send text messages 
+
+		# import modules for sending text messages 
+		from twilio.rest import Client as sms_client
+		
+		# Load some presets from the enviroment
+		
+		acctSID = os.environ.get('TWILIO_ACCOUNT_SID') # Account Subscriber ID
+		authToken =  os.environ.get('TWILIO_AUTH_TOKEN') # Authentication Token
+		twilioNum = os.environ.get('TWILIO_PHONE_NUMBER') # Twilio account number
+
+		client = sms_client(acctSID, authToken)
+
+		message = client.messages.create(body=message, from_=twilioNum, to=rec)
+
+
+
+class MailSender():
+	def __init__(self, receiver, subject, msg_body, attachments=''):
+	
+		self.subject = subject
+		self._receiver = receiver
+		self.body = msg_body
+		self._from = 'prince14asiedu@gmail.com'
+		# self.attachments = attachments
+		# 		
+		# Create an html message template
+		html = open('utils/mailtemplate.txt', 'r')
+		text = html.read()
+		html.close()
+
+		self.msg_temp = text.format(subject=self.subject,body=self.body)
+		
+		msg = Mail(
+			from_email=self._from,
+			to_emails=self._receiver,
+			subject=self.subject,
+			html_content=self.msg_temp
+		)
+		self.send_mail(msg)
+
+
+	def send_mail(self, message):
+		try:
+			API_SECRET = os.environ.get('SENDGRID_API_KEY')
+			sg = SendGridAPIClient(API_SECRET)
+			response = sg.send(message)
+			print(response.status_code)
+			print(response.body)
+			print(response.headers)	
+		
+		except Exception as error:
+			raise error
+			print(str(error))
 
 
 def main():
