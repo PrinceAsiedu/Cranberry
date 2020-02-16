@@ -1,0 +1,10 @@
+<html>
+<head>
+</head>
+<body>
+	<header>
+		<h1>{subject}</h1>
+	</header>
+	<p>{body}</p>
+</body>
+</html>
