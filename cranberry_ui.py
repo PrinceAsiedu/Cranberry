@@ -1,165 +1,621 @@
 # cranberry_ui.py
 
-"""
-Name   : Cranberry
-Author : Prince Oforh Asiedu
-Email  : prince14asiedu@gmail.com
-Date   : June 8, 2019
-Copyright : (c) Prince Oforh Asiedu 2019
+# -----------
+# to-do list  
+# -----------
 
-Phelsy powered by Love
-"""
+# TODO: rewrite all exception statements to raise CranError
+# TODO: store copies of text messages in database 
+# TODO: unsent text messages should have a sent flag set to False
+# TODO: check for internet availability before sending sms
+# TODO: create a server process to handle message sending and receiving 
+# TODO: store copies of mails in database 
+# TODO: unsent mails should have a sent flag set to False
+# TODO: check for internet availability before sending email
+# TODO: create a server process to handle sending and receiving mails
+# TODO: Create printing system
+# TODO: Create a financial plotting system
 
-__version__ = "0.1"
-__date__ = "23-09-19"
-__author__ = "Prince Oforh Asiedu"
+__version__     = "1.2"
+__date__        = "February, 2020"
+__author__      = "Prince Oforh Asiedu"
+__email__       = "prince14asiedu@gmail.com"
+__copyright__   = "(c) Prince Oforh Asiedu"
+
+
+import time
+import string
+from datetime import datetime
 
 import wx
-import time
 import wx.adv as adv
 import wx.dataview as dv
 import wx.lib.agw.aui as agw
 import wx.lib.sized_controls as sc
-import cranberry_logic as Controller
-
-from datetime import datetime as date
-from wx.adv import SplashScreen
-from wx.adv import TaskBarIcon
-from wx.lib.platebtn import PlateButton as pbtn
+from wx.adv import SplashScreen, TaskBarIcon
+from wx.lib import colourdb as cdb
 from wx.lib.filebrowsebutton import FileBrowseButton as fbtn
+from wx.lib.platebtn import PlateButton as pbtn
+from wx.lib.wordwrap import wordwrap
 
-description = '''
-Cranberry School Management System is an advanced school management system for
-the Windows operating system.
-'''
-licence = '''
-MIT LICENSE 
-Copyright (c) 2019 Prince 0. Asiedu
-'''
+from logger import Logger
+import cranberry_logic as Controller
+from cranerror import AuthenticationError, UserNotFound
 
-developer = '''
-Prince Oforh Asiedu
-prince14asiedu@gmail.com
-powered by Phelsy
-'''
+ALPHA_NUM  = 1
+ALPHA_ONLY = 2
+DIGIT_ONLY = 3
+PRINTABLE  = 4
+
+
+class FormValidator(wx.Validator):
+    """ This validator is used to ensure that the user has entered something
+        into the text object editor dialog's text field.
+    """
+    def __init__(self, flag=None, pyVar=None):
+        """ Standard constructor.
+        """
+        wx.Validator.__init__(self)
+        self.flag = flag
+        self.Bind(wx.EVT_CHAR, self.OnChar)
+
+    def Clone(self):
+        """ Standard cloner.
+
+            Note that every validator must implement the Clone() method.
+        """
+        return FormValidator(self.flag)
+
+    def Validate(self, win):
+        """ Validate the contents of the given text control.
+        """
+        textCtrl = self.GetWindow()
+        text = textCtrl.GetValue()
+
+        if len(text) == 0:
+
+            wx.MessageBox("Make sure to fill the entire form!", "Error")
+            textCtrl.SetBackgroundColour("pink")
+            textCtrl.SetFocus()
+            textCtrl.Refresh()
+            return False
+        else:
+            textCtrl.SetBackgroundColour(
+                wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+            textCtrl.Refresh()
+            return True
+
+    def TransferToWindow(self):
+        """ Transfer data from validator to window.
+
+            The default implementation returns False, indicating that an error
+            occurred.  We simply return True, as we don't do any data transfer.
+        """
+        return True # Prevent wxDialog from complaining.
+
+    def TransferFromWindow(self):
+        """ Transfer data from window to validator.
+
+            The default implementation returns False, indicating that an error
+            occurred.  We simply return True, as we don't do any data transfer.
+        """
+        return True # Prevent wxDialog from complaining.
+
+    def OnChar(self, event):
+        key = event.GetKeyCode()
+
+        if key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255:
+            event.Skip()
+            return
+
+        if self.flag == ALPHA_NUM and (chr(key) in string.ascii_letters+string.digits+'@.- '):
+            event.Skip()
+            return
+
+        if self.flag == ALPHA_ONLY and chr(key) in string.ascii_letters+' ':
+            event.Skip()
+            return
+
+        if self.flag == DIGIT_ONLY and chr(key) in string.digits:
+            event.Skip()
+            return
+
+        if self.flag == PRINTABLE and chr(key) in string.printable:
+            event.Skip()
+            return
+
+        if not wx.Validator.IsSilent():
+            wx.Bell()
+
+        # Returning without calling event.Skip eats the event before it
+        # gets to the text control
+        return
+
+
+class DateValidator(wx.Validator):
+    pass
 
 
 class HomePanel(wx.Panel):
+
     def __init__(self, parent):
         super(HomePanel, self).__init__(parent, id=wx.ID_ANY)
+        FONT_SMALL = wx.Font(wx.FontInfo(18).FaceName('Candara').Bold())
+        FONT = wx.Font(wx.FontInfo(15).FaceName('Candara').Bold().Italic())
 
-        # A box to hold some bitmaps and static texts
-        box = wx.BoxSizer(wx.HORIZONTAL)
+        cdb.updateColourDB()
 
-    # bmp = wx.Bitmap('images/whiteboard/11out.png')
-    # self.stbmp  = wx.StaticBitmap(self, bitmap=bmp)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        first_horz_box = wx.BoxSizer(wx.HORIZONTAL)
+        sec_horz_box = wx.BoxSizer(wx.HORIZONTAL)
+
+        stf_box = wx.BoxSizer(wx.VERTICAL)
+        stu_box = wx.BoxSizer(wx.VERTICAL)
+        cse_box = wx.BoxSizer(wx.VERTICAL)
+        itm_box = wx.BoxSizer(wx.VERTICAL)
+        fee_box = wx.BoxSizer(wx.HORIZONTAL)
+        rpt_box = wx.BoxSizer(wx.HORIZONTAL)
+
+          # Student heading 
+        stu_head_box = wx.BoxSizer(wx.HORIZONTAL)
+        stu_txt = wx.StaticText(self, -1, 'Students')
+        stu_txt.SetFont(FONT)
+        stu_txt.SetForegroundColour('grey35')
+        stu_head_box.Add(stu_txt, 1, wx.ALL, 2)
+        
+        # Student statistic body
+        stu_body = wx.BoxSizer(wx.HORIZONTAL)
+
+        stu_bmp = wx.StaticBitmap(self, -1, wx.Bitmap('students_stat.png'))
+        self.stu_stat = wx.StaticText(self, -1, str(Controller.Student().student_total()), 
+                style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
+        self.stu_stat.SetFont(FONT_SMALL)
+        self.stu_stat.SetForegroundColour('grey35')
+        self.stu_stat.SetBackgroundColour('gainsboro')
+
+      
+        stu_ctrls = [
+            (stu_bmp, 1, wx.ALL, 10),
+            (self.stu_stat, 1, wx.ALL|wx.ALIGN_CENTER, 10),
+        ]
+
+        stu_body.AddMany(stu_ctrls)
+
+        # Staff heading 
+        stf_head_box = wx.BoxSizer(wx.HORIZONTAL)
+        stf_txt = wx.StaticText(self, -1, 'Staff')
+        stf_txt.SetFont(FONT)
+        stf_txt.SetForegroundColour('grey35')
+        stf_head_box.Add(stf_txt, 1, wx.ALL, 2)
+        
+        # Staff statistic body
+        stf_body = wx.BoxSizer(wx.HORIZONTAL)
+
+
+        stf_bmp = wx.StaticBitmap(self, -1, wx.Bitmap('staff_stat.png'))
+        self.stf_stat = wx.StaticText(self, -1, str(Controller.Staff().staff_total()), style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
+        self.stf_stat.SetFont(FONT_SMALL)
+        self.stf_stat.SetForegroundColour('grey35')
+        self.stf_stat.SetBackgroundColour('gainsboro')
+
+        stf_ctrls = [
+            (stf_bmp, 1, wx.ALL, 10), 
+            (self.stf_stat, 1, wx.ALL|wx.ALIGN_CENTER, 10)
+            # (stf_btn, 1, wx.ALL|wx.ALIGN_CENTER, 10)
+        ]
+
+        stf_body.AddMany(stf_ctrls)
+
+         # Courses heading 
+        cse_head_box = wx.BoxSizer(wx.HORIZONTAL)
+        cse_txt = wx.StaticText(self, -1, 'Courses')
+        cse_txt.SetFont(FONT)
+        cse_txt.SetForegroundColour('grey35')
+        cse_head_box.Add(cse_txt, 1, wx.ALL, 2)
+        
+        # Courses statistic body
+        cse_body = wx.BoxSizer(wx.HORIZONTAL)
+
+        cse_bmp = wx.StaticBitmap(self, -1, wx.Bitmap('course_stat.png'))
+        self.cse_stat = wx.StaticText(self, -1, str(Controller.Courses().course_total()), style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
+        self.cse_stat.SetFont(FONT_SMALL)
+        self.cse_stat.SetForegroundColour('grey35')
+        self.cse_stat.SetBackgroundColour('gainsboro')
+
+        cse_ctrls = [
+            (cse_bmp, 1, wx.ALL, 10), 
+            (self.cse_stat, 1, wx.ALL|wx.ALIGN_CENTER, 10),
+        ]
+
+        cse_body.AddMany(cse_ctrls)
+
+        # Items heading 
+        itm_head_box = wx.BoxSizer(wx.HORIZONTAL)
+        itm_txt = wx.StaticText(self, -1, 'Inventory')
+        itm_txt.SetFont(FONT)
+        itm_txt.SetForegroundColour('grey35')
+        itm_head_box.Add(itm_txt, 1, wx.ALL, 2)
+        
+        # Items statistic body
+        itm_body = wx.BoxSizer(wx.HORIZONTAL)
+
+        itm_bmp = wx.StaticBitmap(self, -1, wx.Bitmap('list_stat.png'))
+        self.itm_stat = wx.StaticText(self, -1, str(Controller.Inventory().item_total()), style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
+        self.itm_stat.SetFont(FONT_SMALL)
+        self.itm_stat.SetForegroundColour('grey35')
+        self.itm_stat.SetBackgroundColour('gainsboro')
+    
+
+        itm_ctrls = [
+            (itm_bmp, 1, wx.ALL, 10),
+            (self.itm_stat, 1, wx.ALL|wx.ALIGN_CENTER, 10),
+        ]
+
+        itm_body.AddMany(itm_ctrls)
+
+        stu_box.Add(stu_head_box, 1, wx.LEFT|wx.RIGHT, 15)
+        stu_box.Add(stu_body)
+
+        stf_box.Add(stf_head_box, 1, wx.LEFT|wx.RIGHT, 15)
+        stf_box.Add(stf_body)
+
+        cse_box.Add(cse_head_box, 1, wx.LEFT|wx.RIGHT, 15)
+        cse_box.Add(cse_body)
+        
+        itm_box.Add(itm_head_box, 1, wx.LEFT|wx.RIGHT, 15)
+        itm_box.Add(itm_body)
+
+        first_horz_box.Add(stu_box, 1, wx.LEFT, 40)
+        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
+        first_horz_box.Add(stf_box, 1, wx.LEFT, 20)
+        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
+        first_horz_box.Add(cse_box, 1, wx.LEFT, 20)  
+        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)      
+        first_horz_box.Add(itm_box, 1, wx.LEFT, 20)
+    
+        stat_box = wx.StaticBox(self, -1, 'School Statistics')
+        topb, otherb = stat_box.GetBordersForSizer()
+        stat_box.SetFont(wx.Font(wx.FontInfo(12).FaceName('Arial').Bold()))
+        stat_box.SetForegroundColour('grey35')
+
+        sizer.AddSpacer(topb+50)
+        sizer.Add(first_horz_box, flag=wx.ALL|wx.EXPAND, proportion=1, border=5)
+
+        stat_box.SetSizer(sizer)
+        border = wx.BoxSizer(wx.HORIZONTAL)
+        border.Add(stat_box, 1, wx.ALL, 25)
+        
+
+        self.SetBackgroundColour('white')
+        self.SetSizer(border)
+
+
+class StaffForm(sc.SizedDialog):
+    def __init__(self, parent, title):
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
+
+        sc.SizedDialog.__init__(self, None, -1, title, style=FLAGS, size=(350, 500))
+        cPane = self.GetContentsPane()
+        pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
+        pane.SetSizerProps(expand=True, proportion=1)
+        pane.SetSizerType("vertical")
+
+        fn_lbl = wx.StaticText(pane, -1, "Firstname", wx.DefaultPosition, wx.DefaultSize)
+        self.fname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(ALPHA_ONLY))
+
+        ln_lbl = wx.StaticText(pane, -1, "Lastame", wx.DefaultPosition, wx.DefaultSize)
+        self.lname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(ALPHA_ONLY))
+
+        sex_lbl = wx.StaticText(pane, -1, "Gender", wx.DefaultPosition, wx.DefaultSize)
+        self.gender = wx.Choice(pane, -1, choices=["Male", "Female"])
+
+        num_lbl = wx.StaticText(pane, -1, "Phone", wx.DefaultPosition, wx.DefaultSize)
+        self.phone = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(DIGIT_ONLY))
+
+        eml_lbl = wx.StaticText(pane, -1, 'Email', wx.DefaultPosition, wx.DefaultSize)
+        self.email = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(ALPHA_NUM))
+
+        addr_lbl = wx.StaticText(pane, -1, "Address", wx.DefaultPosition, wx.DefaultSize)
+        self.address = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(PRINTABLE))
+
+        cat_lbl = wx.StaticText(pane, -1, 'Category', wx.DefaultPosition, wx.DefaultSize)
+        self.category = wx.Choice(pane, -1, choices=['Administrator', 'Teacher', 'Other'])
+
+        spt_lbl = wx.StaticText(pane, -1, 'Specialty', wx.DefaultPosition, wx.DefaultSize)
+        self.specialty = wx.TextCtrl(pane, -1, size=(150, -1), validator = FormValidator(PRINTABLE))
+
+        self.hd_lbl = wx.StaticText(pane, -1, 'Date Of Hiring', wx.DefaultPosition, wx.DefaultSize)
+        self.hire_date = adv.DatePickerCtrl(pane, size=(200, -1), 
+            style=wx.adv.DP_DROPDOWN| wx.adv.DP_SHOWCENTURY| wx.adv.DP_ALLOWNONE)
+        
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
 
 
 class StaffPanel(wx.Panel):
-    def __init__(self, parent):
-        super(StaffPanel, self).__init__(parent=parent, id=wx.ID_ANY)
 
-        # All other sizers and controls will be put into
-        # the self.main_sizer
+    def __init__(self, parent, home):
+        super(StaffPanel, self).__init__(parent=parent, id=wx.ID_ANY)
+        self.Bind(dv.EVT_DATAVIEW_ITEM_CONTEXT_MENU, self.OnContextMenu)
+        self.home = home
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())     
+
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.dvlc = dv.DataViewListCtrl(self, style=wx.BORDER_THEME
-                                                    | dv.DV_ROW_LINES  # nice alternating bg colors
+                                                    | dv.DV_ROW_LINES
                                                     | dv.DV_VERT_RULES
                                                     | dv.DV_MULTIPLE)
 
-        columns = [('Staff ID', -1), ('Name', -1), ('Gender', -1),
-                   ('Address', -1), ('Phone', -1), ('Email', -1),
-                   ('Date Of Hiring', -1), ('Years Of Service', -1),
-                   ('Department', -1), ('Specialty', -1),
-                   ('Category', -1), ('Salary', -1)]
+        columns = [('Staff ID', 50), ('Firstname', 100), ('Lastname', 100), ('Gender', 100),('Phone', 100),
+                   ('Email', 250), ('Address', 200), ('Date Of Hiring', 150),('Category', 150),('Specialty', 150)]
 
         for column in columns:
             self.dvlc.AppendTextColumn(column[0], width=column[1], mode=dv.DATAVIEW_CELL_EDITABLE)
+        
+        staff = Controller.Staff().all_workers()
+
+        for st in staff:
+            st.doh = datetime.strftime(st.doh, '%x')
+        
+            emp = [st.sid, st.firstname, st.lastname, 
+                st.gender, st.phone, st.email, st.address, st.doh, st.category,st.specialty]
+            
+            self.dvlc.AppendItem(emp)
 
         btnbox = wx.BoxSizer(wx.HORIZONTAL)
 
+        # colour for platebuttons 
+        col = wx.Colour('dodgerblue')
         # add staff member button
-        add_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('images/add.png'), label='New Staff', name='staff_form')
+        add_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('addout.png'), label='New', name='staff_form')
+        add_staff.SetFont(btnFont)
+        add_staff.SetPressColor(col)
         add_staff.Bind(wx.EVT_BUTTON, self.OnNewStaff)
 
         # remove staff member button
-        remove_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('images/cancel.png'), label='Remove Staff')
+        remove_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('deleteout.png'), label='Remove')
+        remove_staff.SetFont(btnFont)
+        remove_staff.SetPressColor(col)
         remove_staff.Bind(wx.EVT_BUTTON, self.OnRemoveStaff)
 
         # save changes made to staff data
-        save_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('images/done.png'), label='Save Changes')
-        remove_staff.Bind(wx.EVT_BUTTON, self.OnSaveChanges)
+        save_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('pinout.png'), label='Edit')
+        save_staff.SetFont(btnFont)
+        save_staff.SetPressColor(col)
+        save_staff.Bind(wx.EVT_BUTTON, self.OnEditEmployee)
 
         # list to hold button data
         btnlist = [add_staff, remove_staff, save_staff]
 
         for button in btnlist:
             btnbox.Add(button)
-
+        
         self.main_sizer.Add(self.dvlc, 1, wx.EXPAND)
         self.main_sizer.Add(btnbox)
         self.SetSizer(self.main_sizer)
 
     def OnNewStaff(self, event):
-        pass
+        with StaffForm(self, 'Employee Registration') as form_dlg: 
+            form_dlg.CenterOnScreen()
+            if form_dlg.ShowModal() == wx.ID_OK:
+                form_info = self.GetEmployee(form_dlg)
+                self.SaveEmployee(form_info)
+            else:
+                form_dlg.Destroy()
+
+    def GetEmployee(self, dialog):
+
+        firstname = dialog.fname.GetValue()
+        lastname = dialog.lname.GetValue()
+        sex_index = dialog.gender.GetSelection()
+        gender = dialog.gender.GetString(sex_index)
+        address = dialog.address.GetValue()
+        phone = dialog.phone.GetValue()
+        email = dialog.email.GetValue()
+        cat_idx = dialog.category.GetSelection()
+        category = dialog.category.GetString(cat_idx)
+        specialty = dialog.specialty.GetValue()
+        hire_date = dialog.hire_date.GetValue()
+
+        employee_data = [firstname, lastname, gender, phone, email, address, category, specialty, hire_date]
+
+        return employee_data
+
+    def SaveEmployee(self, employee_data):
+
+        try:
+            fn, ln, sx, ph, em, ad, ct, sp, hd = employee_data
+            save = Controller.Staff(fn=fn, ln=ln, sx=sx, nm=ph, em=em, ad=ad, hd=hd, lv=ct, sy=sp)
+
+            save.add_worker()
+            self.append_employee()
+            staff_total = str(Controller.Staff().staff_total())
+            self.home.stf_stat.SetLabel(staff_total)
+
+            notify = adv.NotificationMessage(
+                title="Employee Registration Successful",
+                message="%s is registered successfully!" % str(fn + ' ' + ln),
+                parent=None, flags=wx.ICON_INFORMATION)
+            notify.Show(timeout=20)
+        
+        except Exception as error:
+            notify = adv.NotificationMessage(
+                title="Employee Registration Unsuccessful",
+                message="%s could not be registered\n\n%s " % (str(fn + ' ' + ln), str(error)),
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=20)
+            raise error
+
+    def append_employee(self):
+        st = Controller.Staff().fetch_new_worker()
+        employee_data = [st.sid, st.firstname, st.lastname, 
+                         st.gender, st.phone, st.email, 
+                         st.address, st.doh, st.category,
+                         st.specialty
+                        ]
+
+        self.dvlc.AppendItem(employee_data)
 
     def OnRemoveStaff(self, event):
-        pass
+        try:
+            rows = self.dvlc.GetItemCount()
+            if wx.MessageBox('Are you sure you want to continue', 'Delete Employee?', style=wx.YES_NO) == wx.YES:
+                for row in range(rows):
+                    if self.dvlc.IsRowSelected(row):
+                        sid = self.dvlc.GetValue(row, 0)
+                        employee = str(self.dvlc.GetValue(row, 1) + ' ' + self.dvlc.GetValue(row, 2))
+                        Controller.Staff().delete_worker(sid)
+                        self.dvlc.DeleteItem(row)
+                        
+                        staff_total = str(Controller.Staff().staff_total())
+                        self.home.stf_stat.SetLabelText(staff_total)
 
-    def OnSaveChanges(self, event):
-        pass
+                        notify = adv.NotificationMessage(
+                                title="Employee Information Update",
+                                message="%s has been removed from the database!" % employee,
+                                parent=None, flags=wx.ICON_INFORMATION)
+                        notify.Show(timeout=20)
+                    
+                    else:continue
+            
+            else:pass
+
+        except Exception as error:
+            notify = adv.NotificationMessage(
+                title="Employee Information Update",
+                message="Error removing employee!",
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=20)
+        
+    def OnEditEmployee(self, event):
+
+        rows = self.dvlc.GetItemCount()
+        for row in range(rows):
+            if self.dvlc.IsRowSelected(row):
+                wid = self.dvlc.GetValue(row, 0)
+                employee = Controller.Staff().fetch_worker(wid)
+                with StaffForm(self, 'Employee Data Modification') as form_dlg:
+                   
+                    form_dlg.fname.SetValue(employee.firstname)
+                    form_dlg.lname.SetValue(employee.lastname)
+                    form_dlg.phone.SetValue(employee.phone)
+                    form_dlg.email.SetValue(employee.email)
+                    form_dlg.address.SetValue(employee.address)
+                    form_dlg.specialty.SetValue(employee.specialty)
+
+                    form_dlg.CenterOnScreen()
+
+                    if form_dlg.ShowModal() == wx.ID_OK:
+                        try:
+                            form_info = self.GetEmployee(form_dlg)
+                            if not form_info[8].IsValid():
+                                form_info[8] = ''
+
+                            # saving form data in db
+                            firstname, lastname, gender,phone, email, address, category, specialty, doh = form_info
+                            Controller.Staff().edit_worker(wid, fn=firstname, ln=lastname, sx=gender, nm=phone,
+                                em=email, ad=address, hd=doh, lv=category, sy=specialty)           
+
+                            self.dvlc.DeleteAllItems()
+                            staff = Controller.Staff().all_workers()
+
+                            for st in staff:
+                                st.doh = datetime.strftime(st.doh, '%x')
+                                emp = [st.sid, st.firstname, st.lastname, 
+                                    st.gender, st.phone, st.email, st.address, st.doh, st.category,st.specialty]
+
+                                self.dvlc.AppendItem(emp)
+
+                            notify = adv.NotificationMessage(
+                                title="Employee Information Update",
+                                message="Changes committed successfully!",
+                                parent=None, flags=wx.ICON_INFORMATION)
+                            notify.Show(timeout=20)
+                        
+                        except Exception as error:
+                            notify = adv.NotificationMessage(
+                                title="Employee Information Update",
+                                message="Error making changes to employee!",
+                                parent=None, flags=wx.ICON_ERROR)
+                            notify.Show(timeout=20)
+                            raise error
+                        
+                    else:
+                        form_dlg.Destroy()
+
+    def OnContextMenu(self, event): 
+        if not hasattr(self, 'new_id'):
+            self.new_id = wx.NewIdRef()
+            self.edit_id = wx.NewIdRef()
+            self.remove_id = wx.NewIdRef()     
+            self.Bind(wx.EVT_MENU, self.OnNewStaff, id=self.new_id) 
+            self.Bind(wx.EVT_MENU, self.OnRemoveStaff, id=self.remove_id)
+            self.Bind(wx.EVT_MENU, self.OnEditEmployee, id=self.edit_id)
+
+        menu = wx.Menu()
+
+        new_wrk = wx.MenuItem(menu, self.new_id, 'New Employee')
+        new_wrk.SetBitmap(wx.Bitmap('addout.png'))
+
+        del_wrk = wx.MenuItem(menu, self.remove_id, 'Remove Employee')
+        del_wrk.SetBitmap(wx.Bitmap('deleteout.png'))
+
+        edit_wrk = wx.MenuItem(menu,self.edit_id, 'Edit Employee Details')
+        edit_wrk.SetBitmap(wx.Bitmap('pinout.png'))
+
+        menu.Append(new_wrk)
+        menu.Append(del_wrk)
+        menu.Append(edit_wrk)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
 
 
 class StudentForm(sc.SizedDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, title=''):
         FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
 
-        sc.SizedDialog.__init__(self, None, -1, "Student Registration", style=FLAGS)
+        sc.SizedDialog.__init__(self, None, -1, title, style=FLAGS)
         cPane = self.GetContentsPane()
         pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
         pane.SetSizerProps(expand=True, proportion=1)
         pane.SetSizerType("vertical")
         # -----------------------------------------------------------------------
-        '''
-		btnbmp = wx.Bitmap('images/user.png')
-		self.imagebtn = wx.BitmapButton(pane, bitmap=btnbmp,
-			size=(150,100), pos=wx.DefaultPosition, style=wx.BU_BOTTOM)
-		self.imagebtn.SetSizerProps(border=(['all'],10))
-		self.imagebtn.SetLabel('Add Photo')
-		self.imagebtn.Bind(wx.EVT_BUTTON, self.OnAddPhoto)
-		'''
-        # line = wx.StaticLine(pane, size=(500, -1))
-        # line.SetSizerProps(expand=True)
 
         self.fn_lbl = wx.StaticText(pane, -1, "Firstname", wx.DefaultPosition, wx.DefaultSize)
-        self.fname = wx.TextCtrl(pane, -1, " ", size=(150, -1))
+        self.fname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(ALPHA_ONLY))
 
         self.ln_lbl = wx.StaticText(pane, -1, "Lastame", wx.DefaultPosition, wx.DefaultSize)
-        self.lname = wx.TextCtrl(pane, -1, " ", size=(150, -1))
+        self.lname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(ALPHA_ONLY))
 
         self.dob_lbl = wx.StaticText(pane, -1, "Date of Birth", wx.DefaultPosition, wx.DefaultSize)
         self.dob = adv.DatePickerCtrl(pane, size=(100, -1),
-                                      style=wx.adv.DP_DROPDOWN
-                                            | wx.adv.DP_SHOWCENTURY
-                                            | wx.adv.DP_ALLOWNONE)
+                                      style=wx.adv.DP_DROPDOWN| wx.adv.DP_SHOWCENTURY| wx.adv.DP_ALLOWNONE)
 
         self.sex_lbl = wx.StaticText(pane, -1, "Gender", wx.DefaultPosition, wx.DefaultSize)
-        self.gender = wx.Choice(pane, -1, choices=["male", "female"])
+        self.gender = wx.Choice(pane, -1, choices=["Male", "Female"])
 
         self.addr_lbl = wx.StaticText(pane, -1, "Address", wx.DefaultPosition, wx.DefaultSize)
-        self.address = wx.TextCtrl(pane, -1, " ", size=(150, -1))
+        self.address = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(PRINTABLE))
 
         self.num_lbl = wx.StaticText(pane, -1, "Phone", wx.DefaultPosition, wx.DefaultSize)
-        self.phone = wx.TextCtrl(pane, -1, "", size=(150, -1))
+        self.phone = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(DIGIT_ONLY))
 
         self.eml_lbl = wx.StaticText(pane, -1, 'Email', wx.DefaultPosition, wx.DefaultSize)
-        self.email = wx.TextCtrl(pane, -1, " ", size=(200, -1))
+        self.email = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(ALPHA_NUM))
 
         self.prt_lbl = wx.StaticText(pane, -1, 'Parent Name', wx.DefaultPosition, wx.DefaultSize)
-        self.parent_name = wx.TextCtrl(pane, -1, size=(150, -1))
+        self.parent_name = wx.TextCtrl(pane, -1, size=(150, -1), validator = FormValidator(ALPHA_ONLY))
 
         self.lvl_lbl = wx.StaticText(pane, -1, 'Level', wx.DefaultPosition, wx.DefaultSize)
         self.level = wx.Choice(pane, -1, choices=['JHS', 'SHS', 'Professional'])
+
+        self.ste_lbl = wx.StaticText(pane, -1, 'Type of Student', wx.DefaultPosition, wx.DefaultSize)
+        self.stype = wx.Choice(pane, -1, choices=['Regular', 
+                                                  'Remedial',
+                                                  'Vacation - Gold Track', 
+                                                  'Vacation - Green Track',
+                                                  'Bootcamp Course'])
 
         self.adm_lbl = wx.StaticText(pane, -1, 'Addmission Date', wx.DefaultPosition, wx.DefaultSize)
         self.adm_date = adv.DatePickerCtrl(pane, size=(200, -1),
@@ -169,35 +625,15 @@ class StudentForm(sc.SizedDialog):
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
 
-    # ------------------------------------------------------------------------
-    """	
-	def OnAddPhoto(self, event):
-		# Finish Work On OnAddPhoto
-		with wx.FileDialog(self,
-				"Select student photo",
-				wildcard="JPG Files (*.jpg)|*.jpg",
-				style=wx.FD_OPEN |wx.FD_FILE_MUST_EXIST) as photo_dialog:
-
-			if photo_dialog.ShowModal() == wx.ID_CANCEL:
-				return
-
-			self.path_to_photo = photo_dialog.GetPath()
-			self.studentPhoto = wx.Bitmap(self.path_to_photo)
-
-			# Try reading file bytes 
-			try:
-				self.imagebtn.SetBitmap(self.studentPhoto)
-			except Exception as error:
-				txt = 'There was an error while loading photo!\n\n%s\nDo you want to try again?'
-				msg = wx.MessageBox(txt % str(error),'Error',wx.YES_NO)
-				if msg == wx.Yes: pass
-				else: Close()
-    """
-
 
 class StudentPanel(wx.Panel):
-    def __init__(self, parent):
+
+    def __init__(self, parent, home):
         super(StudentPanel, self).__init__(parent=parent, id=wx.ID_ANY)
+        self.Bind(dv.EVT_DATAVIEW_ITEM_CONTEXT_MENU, self.OnContextMenu)
+
+        self.home = home
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())
 
         # All other sizers and controls will be put into the self.main_sizer
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -210,24 +646,24 @@ class StudentPanel(wx.Panel):
 
         cw = 100
         columns = [('ID', cw), ('Firstname', cw), ('Lastname', cw), ('Gender', cw),
-                   ('Date of Birth', 120), ('Level',cw), ('Parent',cw),('Phone', cw),
-                   ('Email', cw),('Address', cw), ('Addmission Date', 130)]
+                   ('Date of Birth', 120), ('Level',cw), ('Type of Student', 120), 
+                   ('Parent',cw),('Phone', cw), ('Email', cw),
+                   ('Address', cw), ('Addmission Date', 130)]
 
         col_num = 0
         for column in columns:
-            col_num += 1
             self.dvlc.AppendTextColumn(column[0], width=column[1], mode=dv.DATAVIEW_CELL_EDITABLE)
 
         studs = Controller.Student()
-        studs = studs.all_students()
+        self.studs = studs.all_students()
+        
+        for st in self.studs:
+            st.dob = datetime.strftime(st.dob, '%x')
+            st.adate = datetime.strftime(st.adate, '%x')
 
-        for st in studs:
             stud = [st.sid, st.firstname, st.lastname, 
-                    st.gender, st.dob, st.level,
-                    st.parent, st.phone, st.email, 
-                    st.address, st.adate
-                ]
-
+                    st.gender, st.dob, st.level, st.stype,
+                    st.parent, st.phone, st.email, st.address, st.adate]
 
             self.dvlc.AppendItem(stud)
 
@@ -235,16 +671,24 @@ class StudentPanel(wx.Panel):
 
         # button sizer
         btnbox = wx.BoxSizer(wx.HORIZONTAL)
+        # colour for platebuttons 
+        col = wx.Colour('dodgerblue')
         # new student button
-        new_student = pbtn(self, id=100, bmp=wx.Bitmap('images/add.png'), label='Add New Student')
+        new_student = pbtn(self, id=100, bmp=wx.Bitmap('addout.png'), label='New')
+        new_student.SetFont(btnFont)
+        new_student.SetPressColor(col)
         new_student.Bind(wx.EVT_BUTTON, self.OnNewStudent)
 
         # remove student button
-        remove_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('images/cancel.png'), label='Remove Student')
+        remove_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('deleteout.png'), label='Remove')
+        remove_student.SetFont(btnFont)
+        remove_student.SetPressColor(col)
         remove_student.Bind(wx.EVT_BUTTON, self.OnRemoveStudent)
 
         # save changes made to student data button
-        edit_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('images/done.png'), label='Save Changes')
+        edit_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('pinout.png'), label='Edit')
+        edit_student.SetFont(btnFont)
+        edit_student.SetPressColor(col)
         edit_student.Bind(wx.EVT_BUTTON, self.OnEditStudent)
 
         # button list
@@ -259,7 +703,7 @@ class StudentPanel(wx.Panel):
 
     def OnNewStudent(self, event):
         # Form for registering new student
-        with StudentForm(self) as form_dlg:  # Form dialog as a context manager
+        with StudentForm(self, "Student Registration") as form_dlg:  # Form dialog as a context manager
             form_dlg.CenterOnScreen()
             if form_dlg.ShowModal() == wx.ID_OK:
                 # try to collect and save student information here
@@ -286,23 +730,28 @@ class StudentPanel(wx.Panel):
         level_index = dialog.level.GetSelection()
         level = dialog.level.GetString(level_index)
 
+        ste_idx = dialog.stype.GetSelection()
+        stype = dialog.stype.GetString(ste_idx)
+
         adm_date = dialog.adm_date.GetValue()
 
-        student_data = [firstname, lastname, gender, parent_name, dob, phone, email, address, level, adm_date]
+        student_data = [firstname, lastname, gender, parent_name, dob, phone, email, address, level, stype, adm_date]
 
         return student_data
 
     def SaveStudent(self, student_details):
 
         try:
-            fn, ln, sx, pa, bd, ph, em, adr, lv, ad = student_details
+            fn, ln, sx, pa, bd, ph, em, adr, lv, st, ad = student_details
             save = Controller.Student(fname=fn, lname=ln,
                                       sex=sx, bd=bd, parent=pa,
                                       num=ph, mail=em, addr=adr,
-                                      lvl=lv, adate=ad)
+                                      lvl=lv, ste=st, adate=ad)
             save.add_student()
 
             self.append_student()
+            student_total = str(Controller.Student().student_total())
+            self.home.stu_stat.SetLabel(student_total)
 
             notify = adv.NotificationMessage(
                 title="Student Registration Successful",
@@ -311,51 +760,181 @@ class StudentPanel(wx.Panel):
             notify.Show(timeout=20)
         
         except Exception as error:
-            raise error
-            '''notify = adv.NotificationMessage(
+            notify = adv.NotificationMessage(
                 title="Student Registration Unsuccessful",
                 message="%s could not be enrolled\nin Your School!\n%s " % (str(fn + ' ' + ln), str(error)),
                 parent=None, flags=wx.ICON_ERROR)
-            notify.Show(timeout=20)'''
+            notify.Show(timeout=20)
 
     def append_student(self):
         st = Controller.Student().fetch_new_student()
         student_data = [st.sid, st.firstname, st.lastname, 
-                        st.gender, st.dob, st.level,
-                        st.parent, st.phone, st.email, 
-                        st.address, st.adate
-                        
-                        ]
+                        st.gender, st.dob, st.level,st.stype,
+                        st.parent, st.phone, st.email, st.address, st.adate
+                    ]
+
         self.dvlc.AppendItem(student_data)
 
-    def OnRemoveStudent(self, event):
+    def OnRemoveStudent(self, event):        
         try:
-            row = 1
-            row += self.dvlc.GetSelectedRow()
-            f = self.dvlc.RowToItem(row)
+            rows = self.dvlc.GetItemCount()
+            if wx.MessageBox('Are you sure you want to continue', 'Delete Student?', style=wx.YES_NO) == wx.YES:
+                for row in range(rows):
+                    if self.dvlc.IsRowSelected(row):
+                        sid = self.dvlc.GetValue(row, 0)
+                        student = str(self.dvlc.GetValue(row, 1) + ' ' + self.dvlc.GetValue(row, 2))
+                        Controller.Student().delete_student(sid)
+                        self.dvlc.DeleteItem(row)
 
-            notify = adv.NotificationMessage(
-                title="Student Update Information",
-                # message="Example Student Is No Longer Enrolled\nin Your School!",
-                message='Row Num is %s' % row,
-                parent=None, flags=wx.ICON_INFORMATION)
-            notify.Show(timeout=20)
+                        student_total = str(Controller.Student().student_total())
+                        self.home.stu_stat.SetLabel(student_total)
+                        notify = adv.NotificationMessage(
+                            title="Student Information Update",
+                            message="%s has been removed from your school!" % student,
+                            parent=None, flags=wx.ICON_INFORMATION)
+                        notify.Show(timeout=20)
+                    
+                    else:continue
+            
+            else:pass
 
         except Exception as error:
-
             notify = adv.NotificationMessage(
-                title="Student Update Information",
-                message="Error Removing Student From Database!",
-                parent=None, flags=wx.ICON_INFORMATION)
+                title="Student Information Update",
+                message="Error removing student!",
+                parent=None, flags=wx.ICON_ERROR)
             notify.Show(timeout=20)
-    
+        
     def OnEditStudent(self, event):
-        pass
+
+        rows = self.dvlc.GetItemCount()
+        for row in range(rows):
+            if self.dvlc.IsRowSelected(row):
+                sid = self.dvlc.GetValue(row, 0)
+                student = Controller.Student().fetch_student(sid)
+                with StudentForm(self, 'Student Data Modification') as form_dlg:
+                   
+                    form_dlg.fname.SetValue(student.firstname)
+                    form_dlg.lname.SetValue(student.lastname)
+                    form_dlg.phone.SetValue(student.phone)
+                    form_dlg.email.SetValue(student.email)
+                    form_dlg.address.SetValue(student.address)
+                    form_dlg.parent_name.SetValue(student.parent)
+
+                    form_dlg.CenterOnScreen()
+
+                    if form_dlg.ShowModal() == wx.ID_OK:
+                        try:
+                            form_info = self.GetStudentFormDetails(form_dlg)
+                            fn, ln, sx, pa, bd, ph, em, adr, lv, st, ad = form_info
+
+                            if not bd.IsValid():
+                                bd = ''
+                            
+                            if not ad.IsValid():
+                                ad = ''
+
+                            Controller.Student().edit_student_data(sid, fname=fn, lname=ln,
+                            sex=sx, bd=bd, parent=pa, phone=ph, email=em, addr=adr, lvl=lv, ste=st) 
+                            
+                            self.dvlc.DeleteAllItems()
+                            
+                            studs = Controller.Student()
+                            studs = studs.all_students()
+                            
+                            for st in studs:
+                                stud = [st.sid, st.firstname, st.lastname, 
+                                        st.gender, st.dob, st.level, st.stype,
+                                        st.parent, st.phone, st.email, st.address, st.adate]
+
+                                self.dvlc.AppendItem(stud)          
+
+                            notify = adv.NotificationMessage(
+                                title="Student Information Update",
+                                message="Changes committed successfully!",
+                                parent=None, flags=wx.ICON_INFORMATION)
+                            notify.Show(timeout=20)
+                        
+                        except Exception as error:
+                            notify = adv.NotificationMessage(
+                                title="Student Information Update",
+                                message="Error making changes to student!",
+                                parent=None, flags=wx.ICON_ERROR)
+                            notify.Show(timeout=20)
+                            raise error
+                        
+                    else:
+                        form_dlg.Destroy()
+
+    def OnContextMenu(self, event): 
+        if not hasattr(self, 'new_id'):
+            self.new_id = wx.NewIdRef()
+            self.edit_id = wx.NewIdRef()
+            self.remove_id = wx.NewIdRef()     
+            self.Bind(wx.EVT_MENU, self.OnNewStudent, id=self.new_id) 
+            self.Bind(wx.EVT_MENU, self.OnRemoveStudent, id=self.remove_id)
+            self.Bind(wx.EVT_MENU, self.OnEditStudent, id=self.edit_id)
+
+        menu = wx.Menu()
+           
+        new_stu = wx.MenuItem(menu, self.new_id, 'New Student')
+        new_stu.SetBitmap(wx.Bitmap('addout.png'))
+
+        del_stu = wx.MenuItem(menu, self.remove_id, 'Remove Student')
+        del_stu.SetBitmap(wx.Bitmap('deleteout.png'))
+
+        edit_stu = wx.MenuItem(menu,self.edit_id, 'Edit Student Information')
+        edit_stu.SetBitmap(wx.Bitmap('pinout.png'))
+
+        menu.Append(new_stu)
+        menu.Append(del_stu)
+        menu.Append(edit_stu)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
+
+
+class CourseForm(sc.SizedDialog):
+    def __init__(self, parent, title=''):
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
+
+        sc.SizedDialog.__init__(self, None, -1, title, style=FLAGS, size=(350, 500))
+        cPane = self.GetContentsPane()
+        pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
+        pane.SetSizerProps(expand=True, proportion=1)
+        pane.SetSizerType("vertical")
+
+
+        nm_lbl = wx.StaticText(pane, -1, "Subject", wx.DefaultPosition, wx.DefaultSize)
+        self.name = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(ALPHA_NUM))
+
+        teacher = wx.StaticText(pane, -1, 'Name of Teacher', wx.DefaultPosition, wx.DefaultSize)
+        self.teacher = wx.TextCtrl(pane, -1, '', size=(200, -1), validator = FormValidator(ALPHA_ONLY))
+
+        du_lbl = wx.StaticText(pane, -1, "Duration", wx.DefaultPosition, wx.DefaultSize)
+        self.duration = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(ALPHA_NUM))
+
+        lv_lbl = wx.StaticText(pane, -1, "Level", wx.DefaultPosition, wx.DefaultSize)
+        self.level = wx.Choice(pane, -1, choices=["JHS","SHS","Professional"], size=(200, -1))
+
+        pr_lbl = wx.StaticText(pane, -1, 'Price', wx.DefaultPosition, wx.DefaultSize)
+        self.price = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(DIGIT_ONLY))
+
+        st_lbl = wx.StaticText(pane, -1, "Status", wx.DefaultPosition, wx.DefaultSize)
+        self.status = wx.Choice(pane, -1, size=(200, -1), choices=['Inactive', 'Active']) 
+
+        
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
 
 
 class CoursePanel(wx.Panel):
-    def __init__(self, parent):
+
+    def __init__(self, parent, home):
         super(CoursePanel, self).__init__(parent=parent, id=wx.ID_ANY)
+        self.Bind(dv.EVT_DATAVIEW_ITEM_CONTEXT_MENU, self.OnContextMenu)
+
+        self.home = home
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -364,24 +943,40 @@ class CoursePanel(wx.Panel):
                                                     | dv.DV_VERT_RULES
                                                     | dv.DV_MULTIPLE)
 
-        columns = [('Course ID', -1), ('Name', -1), ('Duration', -1),
-                   ('CourseLevel', -1), ('Fee', -1), ('Status', -1)]
+        columns = [('Subject ID', -1), ('Subject', -1), ('Teacher', -1), 
+                    ('Duration', -1),('Level', -1), ('Fee', -1), ('Status', -1)]
 
         for column in columns:
             self.dvlc.AppendTextColumn(column[0], width=column[1], mode=dv.DATAVIEW_CELL_EDITABLE)
+        
+        courses = Controller.Courses()
+        self.courses = courses.all_courses()
+        
+        for cs in self.courses:
+            course = [cs.cid, cs.name, cs.teacher, cs.duration, cs.level, cs.price, cs.status]
+
+            self.dvlc.AppendItem(course)
 
         btnbox = wx.BoxSizer(wx.HORIZONTAL)
+        # colour for platebuttons 
+        col = wx.Colour('dodgerblue')
         # new course button
-        new_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('images/add.png'), label='Add New Course')
+        new_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('addout.png'), label='New')
+        new_course.SetFont(btnFont)
+        new_course.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnNewCourse, new_course)  # Bind function to button
 
         # remove course button
-        remove_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('images/cancel.png'), label='Remove Course')
+        remove_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('deleteout.png'), label='Remove')
+        remove_course.SetFont(btnFont)
+        remove_course.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnRemoveCourse, remove_course)
 
         # save changes made to course data button
-        save_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('images/done.png'), label='Save Changes')
-        self.Bind(wx.EVT_BUTTON, self.OnSaveChanges, save_course)
+        save_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('pinout.png'), label='Edit')
+        save_course.SetFont(btnFont)
+        save_course.SetPressColor(col)
+        self.Bind(wx.EVT_BUTTON, self.OnEditCourse, save_course)
 
         # button list
         btnlist = [new_course, remove_course, save_course]
@@ -394,40 +989,489 @@ class CoursePanel(wx.Panel):
         self.SetSizer(self.main_sizer)
 
     def OnNewCourse(self, event):
-        pass
+        # Form for registering new student
+        with CourseForm(self, 'New Subject') as form_dlg:  # Form dialog as a context manager
+            form_dlg.CenterOnScreen()
+            if form_dlg.ShowModal() == wx.ID_OK:
+                # try to collect and save student information here
+                form_info = self.GetFormData(form_dlg)
+                self.SaveCourse(form_info)
+            else:
+                # Dismiss the form dialog
+                form_dlg.Destroy()
+
+    def GetFormData(self, dialog):
+
+        name = dialog.name.GetValue()
+        teacher = dialog.teacher.GetValue()
+        duration = dialog.duration.GetValue()
+        level = dialog.level.GetSelection()
+        level = dialog.level.GetString(level)
+
+        price = dialog.price.GetValue()
+        if price == 0 or price == None:
+            price = None
+
+        status = dialog.status.GetSelection()
+        status  = dialog.status.GetString(status)
+
+        course_data = [name, teacher, duration, level, price, status]
+
+        return course_data
+
+    def SaveCourse(self, course_data):
+
+        try:
+            name, teacher, duration, level, price, status = course_data
+            save = Controller.Courses(name=name, teacher=teacher, duration=duration, level=level, price=price, status=status)
+            save.add_course()
+
+            self.append_course()
+            course_total = str(Controller.Courses().course_total())
+            self.home.cse_stat.SetLabel(course_total)
+            notify = adv.NotificationMessage(
+                title="Course Registration Successful",
+                message="%s is now Offered\nin Your School!" % str(name),
+                parent=None, flags=wx.ICON_INFORMATION)
+            notify.Show(timeout=20)
+        
+        except Exception as error:
+            notify = adv.NotificationMessage(
+                title="Course Registration Unsuccessful",
+                message="%s could not be registered!\n%s " % (str(name), str(error)),
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=20)
+            raise error
+
+    def append_course(self):
+        cs = Controller.Courses().fetch_new_course()
+        course_data = [cs.cid, cs.name, cs.teacher, cs.duration, cs.price, cs.level, cs.status]
+
+        self.dvlc.AppendItem(course_data)
 
     def OnRemoveCourse(self, event):
-        pass
+        try:
+            rows = self.dvlc.GetItemCount()
+            if wx.MessageBox('Are you sure you want to continue', 'Delete Course?', style=wx.YES_NO) == wx.YES:
+                for row in range(rows):
+                    if self.dvlc.IsRowSelected(row):
+                        cid = self.dvlc.GetValue(row, 0)
+                        course = str(self.dvlc.GetValue(row, 1))
+                        Controller.Courses().delete_course(cid)
+                        self.dvlc.DeleteItem(row)
 
-    def OnSaveChanges(self, event):
-        pass
+                        course_total = str(Controller.Courses().course_total())
+                        self.home.cse_stat.SetLabel(course_total)
+
+                        notify = adv.NotificationMessage(
+                            title="Course Information Update",
+                            message="%s has been removed from the database!" % course,
+                            parent=None, flags=wx.ICON_INFORMATION)
+                        notify.Show(timeout=20)
+                    
+                    else:continue
+            
+            else:pass
+
+        except Exception as error:
+            notify = adv.NotificationMessage(
+                title="Course Information Update",
+                message="Error removing course!",
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=20)
+
+    def OnEditCourse(self, event):
+        
+        rows = self.dvlc.GetItemCount()
+        for row in range(rows):
+            if self.dvlc.IsRowSelected(row):
+                cid = self.dvlc.GetValue(row, 0)
+                course = Controller.Courses().fetch_course(cid)
+                with CourseForm(self, 'Course Data Modification') as form_dlg:
+                   
+                    form_dlg.name.SetValue(course.name)
+                    form_dlg.teacher.SetValue(course.teacher)
+                    form_dlg.duration.SetValue(course.duration)
+                    form_dlg.price.SetValue(str(course.price))
+                    form_dlg.status.SetValue(course.status)
+
+                    form_dlg.CenterOnScreen()
+
+                    if form_dlg.ShowModal() == wx.ID_OK:
+                        try:
+                            form_info = self.GetFormData(form_dlg)
+
+                            subject, teacher, duration, level, price, status = form_info
+                            Controller.Courses().edit_course(cid, subject, teacher, duration, level, price, status) 
+                            
+                            self.dvlc.DeleteAllItems()
+                            
+                            courses = Controller.Courses()
+                            courses = courses.all_courses()
+                            
+                            for cs in courses:
+                                course = [cs.cid, cs.name, cs.teacher, cs.duration, cs.level, cs.price, cs.status]
+
+                                self.dvlc.AppendItem(course)
+
+                            notify = adv.NotificationMessage(
+                                title="Course Information Update",
+                                message="Changes committed successfully!",
+                                parent=None, flags=wx.ICON_INFORMATION)
+                            notify.Show(timeout=20)
+                        
+                        except Exception as error:
+                            notify = adv.NotificationMessage(
+                                title="Course Information Update",
+                                message="Error making changes to item!",
+                                parent=None, flags=wx.ICON_ERROR)
+                            notify.Show(timeout=20)
+                        
+                    else:
+                        form_dlg.Destroy()
+
+    def OnContextMenu(self, event): 
+        if not hasattr(self, 'new_id'):
+            self.new_id = wx.NewIdRef()
+            self.edit_id = wx.NewIdRef()
+            self.remove_id = wx.NewIdRef()     
+            self.Bind(wx.EVT_MENU, self.OnNewCourse, id=self.new_id) 
+            self.Bind(wx.EVT_MENU, self.OnRemoveCourse, id=self.remove_id)
+            self.Bind(wx.EVT_MENU, self.OnEditCourse, id=self.edit_id)
+
+        menu = wx.Menu()
+
+        new_sub = wx.MenuItem(menu, self.new_id, 'New Subject')
+        new_sub.SetBitmap(wx.Bitmap('addout.png'))
+
+        del_sub = wx.MenuItem(menu, self.remove_id, 'Remove Subject')
+        del_sub.SetBitmap(wx.Bitmap('deleteout.png'))
+
+        edit_sub = wx.MenuItem(menu,self.edit_id, 'Edit Subject Information')
+        edit_sub.SetBitmap(wx.Bitmap('pinout.png'))
+
+        menu.Append(new_sub)
+        menu.Append(del_sub)
+        menu.Append(edit_sub)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
 
 
 class AttendancePanel(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, home):
         super(AttendancePanel, self).__init__(parent=parent, id=wx.ID_ANY)
+
+        self.home = home
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
 
 
 class FeePanel(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, home):
         super(FeePanel, self).__init__(parent=parent, id=wx.ID_ANY)
+
+        self.home = home
+
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
+
+
+class ItemForm(sc.SizedDialog):
+    def __init__(self, parent, title=''):
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
+
+        sc.SizedDialog.__init__(self, None, -1, title, style=FLAGS, size=(350, 450))
+        cPane = self.GetContentsPane()
+        pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
+        pane.SetSizerProps(expand=True, proportion=1)
+        pane.SetSizerType("vertical")
+
+
+        nm_lbl = wx.StaticText(pane, -1, "Name", wx.DefaultPosition, wx.DefaultSize)
+        self.name = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=FormValidator(ALPHA_ONLY))
+
+        dt_lbl = wx.StaticText(pane, -1, "Description", wx.DefaultPosition, wx.DefaultSize)
+        self.description = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=FormValidator(ALPHA_NUM))
+
+        qt_lbl = wx.StaticText(pane, -1, "Quantity", wx.DefaultPosition, wx.DefaultSize)
+        self.quantity = qty = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=FormValidator(DIGIT_ONLY))
+
+        st_lbl = wx.StaticText(pane, -1, 'State/Condition', wx.DefaultPosition, wx.DefaultSize)
+        self.state = wx.Choice(pane, -1, size=(300, -1), choices=['Not Good','Normal','Good', 'Excellent'])
+
+        ct_lbl = wx.StaticText(pane, -1, "Cost", wx.DefaultPosition, wx.DefaultSize)
+        self.cost = cs = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=FormValidator(DIGIT_ONLY))
+
+        dc_lbl = wx.StaticText(pane, -1, "Discount(In Money)", wx.DefaultPosition, wx.DefaultSize)
+        self.discount = wx.TextCtrl(pane, -1, '', size=(300, -1), validator=FormValidator(DIGIT_ONLY))
+
+        wx.StaticText(pane, -1, 'Date Purchased')
+        self.date = wx.adv.DatePickerCtrl(pane, -1, size=(100, -1),
+                        style=wx.adv.DP_DROPDOWN| wx.adv.DP_SHOWCENTURY| wx.adv.DP_ALLOWNONE)
+
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
 
 
 class InventoryPanel(wx.Panel):
-    def __init__(self, parent):
+
+    def __init__(self, parent, home):
         super(InventoryPanel, self).__init__(parent=parent, id=wx.ID_ANY)
+        self.Bind(dv.EVT_DATAVIEW_ITEM_CONTEXT_MENU, self.OnContextMenu)
+
+        self.home = home
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())
+
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.dvlc = dv.DataViewListCtrl(self, style=wx.BORDER_THEME
+                                                    | dv.DV_ROW_LINES  # nice alternating bg colors
+                                                    | dv.DV_VERT_RULES
+                                                    | dv.DV_MULTIPLE)
+
+        columns = [('Item ID', -1), ('Name', 120), ('Description', 270),
+                   ('Quantity', -1), ('State', -1), ('Cost', -1), 
+                   ('Discount', -1), ('Totalcost', 110), ('Date of Purchase', 110)
+                ]
+
+        for column in columns:
+            self.dvlc.AppendTextColumn(column[0], width=column[1], mode=dv.DATAVIEW_CELL_EDITABLE)
+        
+        items = Controller.Inventory()
+        self.items = items.all_items()
+        
+        for item in self.items:
+            item.date_bought = datetime.strftime(item.date_bought, '%x')
+            stud = [item.pid, item.name, item.description, item.quantity, 
+                    item.state, item.cost_per_item, item.discount, item.totalcost, item.date_bought]
+
+            self.dvlc.AppendItem(stud)
+        
+        btnbox = wx.BoxSizer(wx.HORIZONTAL)
+        # colour for platebuttons 
+        col = wx.Colour('dodgerblue')
+        # new item button
+        new_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('addout.png'), label='New')
+        new_item.SetFont(btnFont)
+        new_item.SetPressColor(col)
+        self.Bind(wx.EVT_BUTTON, self.OnNewItem, new_item)
+
+        # remove item button
+        remove_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('deleteout.png'), label='Remove')
+        remove_item.SetFont(btnFont)
+        remove_item.SetPressColor(col)
+        self.Bind(wx.EVT_BUTTON, self.OnRemoveItem, remove_item)
+
+        # save changes made to item info button
+        save_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('pinout.png'), label='Edit')
+        save_item.SetFont(btnFont)
+        save_item.SetPressColor(col)
+        self.Bind(wx.EVT_BUTTON, self.OnEditItem, save_item)
+
+        # button list
+        btnlist = [new_item, remove_item, save_item]
+
+        for button in btnlist:
+            btnbox.Add(button)
+
+        self.main_sizer.Add(self.dvlc, 1, wx.EXPAND)
+        self.main_sizer.Add(btnbox)
         self.SetSizer(self.main_sizer)
+
+    def OnNewItem(self, event):
+        with ItemForm(self, 'New Item') as form_dlg:
+            form_dlg.CenterOnScreen()
+            if form_dlg.ShowModal() == wx.ID_OK:
+                form_info = self.GetFormData(form_dlg)
+                self.SaveItem(form_info)
+            else:
+                form_dlg.Destroy()
+
+    def GetFormData(self, dialog):
+
+        name = dialog.name.GetValue()
+        description = dialog.description.GetValue()
+        quantity = dialog.quantity.GetValue()
+        state = dialog.state.GetSelection()
+        state = dialog.state.GetString(state)
+        cost = dialog.cost.GetValue()
+    
+        discount = dialog.discount.GetValue()
+        date = dialog.date.GetValue()
+
+        if quantity == 0 or quantity == None:
+            quantity = 1
+        
+        if cost == 0 or cost == None:
+            cost == None
+        
+        if discount == 0 or discount == None:
+            discount = None 
+
+        item_data = [name, description, quantity, state, cost, discount, date]
+
+        return item_data
+
+    def SaveItem(self, item_data):
+
+        try:
+            name, description, quantity, state, cost, discount, date = item_data
+            total = (int(cost) * int(quantity)) - int(discount)
+
+            item = Controller.Inventory(name=name, desc=description, 
+                qty=quantity, state=state, cost=cost, 
+                discount=discount,total=total, date=date)
+            item.add_item()
+
+            self.append_item()
+            item_total = str(Controller.Inventory().item_total())
+            self.home.itm_stat.SetLabel(item_total)
+
+            notify = adv.NotificationMessage(
+                title="Inventory Update Successful",
+                message="%s successfully added to\n your inventory!" % str(name),
+                parent=None, flags=wx.ICON_INFORMATION)
+            notify.Show(timeout=20)
+        
+        except Exception as error:
+
+            notify = adv.NotificationMessage(
+                title="Inventory Update Unsuccessful",
+                message="%s could not be added to your inventory!\n%s " % (str(name), str(error)),
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=20)
+
+    def append_item(self):
+        item = Controller.Inventory().fetch_new_item()
+        item.date_bought = datetime.strftime(item.date_bought, '%x')
+        item_data = [item.pid, item.name, item.description, 
+                     item.quantity, item.state, item.cost_per_item, 
+                     item.discount, item.totalcost
+                    ]
+
+        self.dvlc.AppendItem(item_data)
+
+    def OnRemoveItem(self, event):
+        try:
+            if wx.MessageBox('Are you sure you want to continue', 'Delete Item?', style=wx.YES_NO) == wx.YES:
+
+                row = self.dvlc.GetSelectedRow()
+                pid = self.dvlc.GetValue(row, 0)
+                item = str(self.dvlc.GetValue(row, 1))
+                Controller.Inventory().delete_item(pid)
+                self.dvlc.DeleteItem(row)
+                
+                item_total = str(Controller.Inventory().item_total())
+                self.home.itm_stat.SetLabel(item_total)
+
+                notify = adv.NotificationMessage(
+                    title="Course Information Update",
+                    message="%s has been removed from the database!" % item,
+                    parent=None, flags=wx.ICON_INFORMATION)
+                notify.Show(timeout=20)
+            
+            else:pass
+
+        except Exception as error:
+            notify = adv.NotificationMessage(
+                title="Inventory Information Update",
+                message="Error removing item!",
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=20)
+
+    def OnEditItem(self, event):
+        
+        rows = self.dvlc.GetItemCount()
+        for row in range(rows):
+            if self.dvlc.IsRowSelected(row):
+                pid = self.dvlc.GetValue(row, 0)
+                item = Controller.Inventory().fetch_item(pid)
+                with ItemForm(self, 'Item Data Modification') as form_dlg:
+                   
+                    form_dlg.name.SetValue(item.name)
+                    form_dlg.description.SetValue(item.description)
+                    form_dlg.quantity.SetValue(str(item.quantity))
+                    form_dlg.cost.SetValue(str(item.cost_per_item))
+                    form_dlg.discount.SetValue(str(item.discount))
+
+                    form_dlg.CenterOnScreen()
+
+                    if form_dlg.ShowModal() == wx.ID_OK:
+                        try:
+                            form_info = self.GetFormData(form_dlg)
+
+                            name, description, quantity, state, cost, discount, p_date = form_info
+                            total = (int(cost) * int(quantity)) - int(discount)
+
+                            if not p_date.IsValid():
+                                p_date = ''
+
+                            item = Controller.Inventory(name, description, quantity, state, cost, total, discount, p_date)
+                            item.edit_item(pid) # edited item
+                            
+                            self.dvlc.DeleteAllItems()
+
+                            items = Controller.Inventory()
+                            items = items.all_items()
+                            
+                            for item in items:
+                                
+                                stud = [item.pid, item.name, item.description, item.quantity, 
+                                        item.state, item.cost_per_item, item.discount, item.totalcost, item.date_bought]
+
+                                self.dvlc.AppendItem(stud)
+
+                            notify = adv.NotificationMessage(
+                                title="Item Information Update",
+                                message="Changes committed successfully!",
+                                parent=None, flags=wx.ICON_INFORMATION)
+                            notify.Show(timeout=20)
+                        
+                        except Exception as error:
+                            notify = adv.NotificationMessage(
+                                title="Item Information Update",
+                                message="Error making changes to item info!",
+                                parent=None, flags=wx.ICON_ERROR)
+                            notify.Show(timeout=20)
+                            raise error
+                        
+                    else:
+                        form_dlg.Destroy()
+
+    def OnContextMenu(self, event): 
+        if not hasattr(self, 'new_id'):
+            self.new_id = wx.NewIdRef()
+            self.edit_id = wx.NewIdRef()
+            self.remove_id = wx.NewIdRef()     
+            self.Bind(wx.EVT_MENU, self.OnNewItem, id=self.new_id) 
+            self.Bind(wx.EVT_MENU, self.OnRemoveItem, id=self.remove_id)
+            self.Bind(wx.EVT_MENU, self.OnEditItem, id=self.edit_id)
+
+        menu = wx.Menu()
+
+        new_itm = wx.MenuItem(menu, self.new_id, 'New Student')
+        new_itm.SetBitmap(wx.Bitmap('addout.png'))
+
+        del_itm = wx.MenuItem(menu, self.remove_id, 'Remove Student')
+        del_itm.SetBitmap(wx.Bitmap('deleteout.png'))
+
+        edit_itm = wx.MenuItem(menu,self.edit_id, 'Edit Student Information')
+        edit_itm.SetBitmap(wx.Bitmap('pinout.png'))
+
+        menu.Append(new_itm)
+        menu.Append(del_itm)
+        menu.Append(edit_itm)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
 
 
 class ReportPanel(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, home):
         super(ReportPanel, self).__init__(parent=parent, id=wx.ID_ANY)
+
+        self.home = home
+
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
 
@@ -446,19 +1490,19 @@ class StatBar(wx.StatusBar):
         self.SetStatusWidths([-2, 213])
 
         # First field text
-        status_text = " Welcome to Cranberry SMS %s" % __version__
+        status_text = " Cranberry" 
         self.SetStatusText(status_text, 0)
 
         # A timer to drive the clock in the second field
-        self.timer = wx.PyTimer(self._notify)
+        self.timer = wx.PyTimer(self.notify)
         self.timer.Start(1000)
-        self._notify()
+        self.notify()
 
-    def _notify(self):
-        t = time.localtime(time.time())
-        st = time.strftime("%a %b %Y \t\t\t\t %X %p", t)
-        self.SetStatusText(st, 1)
-
+    def notify(self):
+        sch_time = time.localtime(time.time())
+        formatted_time = time.strftime("\t\t%a, %b %d, %Y \t %X %p", sch_time)
+        self.SetStatusText(formatted_time, 1)
+        
 
 class CranTaskBarIcon(TaskBarIcon):
     TBMENU_RESTORE = wx.NewIdRef()
@@ -470,7 +1514,7 @@ class CranTaskBarIcon(TaskBarIcon):
         self.frame = frame
 
         # Set the task bar image
-        tbi_img = wx.Image('images/cherrytree.png')
+        tbi_img = wx.Image('cherrytree.png')
         icon = self.make_icon(tbi_img)
         self.SetIcon(icon, 'Cranberry')
 
@@ -515,6 +1559,7 @@ class CranTaskBarIcon(TaskBarIcon):
     def OnTaskBarClose(self, event):
         wx.CallAfter(self.frame.Close)
 
+
 class SmsPad(sc.SizedDialog):
     def __init__(self, parent):
         FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
@@ -525,20 +1570,20 @@ class SmsPad(sc.SizedDialog):
         pane.SetSizerProps(expand=True, proportion=1)
         pane.SetSizerType("vertical")
 
-        font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
+        # font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
 
         rec_lbl = wx.StaticText(pane, -1, 'Reciepient\'s phone number')
-        rec_lbl.SetFont(font)
+        # rec_lbl.SetFont(font)
         self.receipient = wx.TextCtrl(pane, -1, value="", style=wx.TE_PROCESS_ENTER)
         self.receipient.SetFocus()
         self.receipient.SetSizerProps(expand=True)
-        self.receipient.SetFont(font)
+        # self.receipient.SetFont(font)
 
         bd_lbl = wx.StaticText(pane, -1, 'Message Body')
-        bd_lbl.SetFont(font)
+        # bd_lbl.SetFont(font)
         self.body = wx.TextCtrl(pane, -1, size=(-1,110), style=wx.TE_MULTILINE)
         self.body.SetSizerProps(expand=True)
-        self.body.SetFont(font)
+        # self.body.SetFont(font)
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
@@ -553,128 +1598,211 @@ class MailPad(sc.SizedDialog):
         pane.SetSizerProps(expand=True, proportion=1)
         pane.SetSizerType("vertical")
 
-        font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
+        # font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
 
         rec_lbl = wx.StaticText(pane, -1, 'Reciepient\' email address')
-        rec_lbl.SetFont(font)
+        # rec_lbl.SetFont(font)
 
         self.receipient = wx.TextCtrl(pane, -1, value="", style=wx.TE_PROCESS_ENTER)
         self.receipient.SetFocus()
         self.receipient.SetSizerProps(expand=True)
-        self.receipient.SetFont(font)
+        # self.receipient.SetFont(font)
 
         sub_lbl = wx.StaticText(pane, -1, 'Subject')
-        sub_lbl.SetFont(font)
+        # sub_lbl.SetFont(font)
 
         self.subject = wx.TextCtrl(pane, -1, value='', style=wx.TE_PROCESS_ENTER)
         self.subject.SetSizerProps(expand=True)
-        self.subject.SetFont(font)
+        # self.subject.SetFont(font)
 
         bd_lbl = wx.StaticText(pane, -1, 'Message Body')
-        bd_lbl.SetFont(font)
+        # bd_lbl.SetFont(font)
         self.body = wx.TextCtrl(pane, -1, size=(-1,110), style=wx.TE_MULTILINE)
         self.body.SetSizerProps(expand=True)
-        self.body.SetFont(font)
+        # self.body.SetFont(font)
 
         self.attach = fbtn(pane, -1, buttonText='Add an Attachment')
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
 
+
+class LoginDialog(wx.Dialog):
+    """
+    Class to define login dialog
+    """
+ 
+    def __init__(self):
+        wx.Dialog.__init__(self, None, title="Login", size=(250, 255))
+        self.logged_in = False
+        self.Centre()
+ 
+        # user info
+        user_sizer = wx.BoxSizer(wx.HORIZONTAL)
+ 
+        user_lbl = wx.StaticText(self, label="Username:")
+        user_sizer.Add(user_lbl, 0, wx.ALL|wx.CENTER, 5)
+        self.user = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
+        self.user.Bind(wx.EVT_TEXT_ENTER, self.onLogin)
+        user_sizer.Add(self.user, 0, wx.ALL, 5)
+ 
+        # pass info
+        p_sizer = wx.BoxSizer(wx.HORIZONTAL)
+ 
+        p_lbl = wx.StaticText(self, label="Password:")
+        p_sizer.Add(p_lbl, 0, wx.ALL|wx.CENTER, 5)
+        self.password = wx.TextCtrl(self, style=wx.TE_PASSWORD|wx.TE_PROCESS_ENTER)
+        self.password.Bind(wx.EVT_TEXT_ENTER, self.onLogin)
+        p_sizer.Add(self.password, 0, wx.ALL, 5)
+ 
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(user_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(p_sizer, 0, wx.ALL, 5)
+ 
+        btn = wx.Button(self, label="Login")
+        btn.Bind(wx.EVT_BUTTON, self.onLogin)
+        main_sizer.Add(btn, 0, wx.ALL|wx.CENTER, 5)
+ 
+        self.SetSizer(main_sizer)
+ 
+    def onLogin(self, event):
+        """
+        Check credentials and login
+        """
+        user = self.user.GetValue()
+        password = self.password.GetValue()
+        try:
+            if Controller.Admin().authenticate(user, password):
+                self.logged_in = True
+                self.Close()
+            else:
+                raise AuthenticationError()
+        except Exception as error:
+            self.user.SetValue('')
+            self.password.SetValue('')
+            err_msg = error.args[0]
+            wx.MessageBox('Error signing in\n {}'.format(AuthenticationError(err_msg)), 'Login Error')
+ 
+
 class AppFrame(wx.Frame):
     def __init__(self, parent, title=''):
-        super(AppFrame, self).__init__(parent=parent, title=title,
-                                       style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
+        FLAGS = (wx.FULL_REPAINT_ON_RESIZE |wx.MINIMIZE_BOX | wx.SYSTEM_MENU | 
+                wx.CAPTION | wx.CLOSE_BOX | wx.FRAME_SHAPED)
+        super(AppFrame, self).__init__(parent=parent, title=title, style=FLAGS)
 
-        # Control some system options.
-        wx.SystemOptions.SetOption("msw.remap", 2)
-        wx.SystemOptions.SetOption("msw.notebook.themed-background", 1)
-        wx.SystemOptions.SetOption("msw.display.directdraw", 0)
+        self.Bind(wx.EVT_CONTEXT_MENU, self.OnSettings)
+        # Ask user to login
+       
+        # dlg = LoginDialog()
+        # dlg.ShowModal()
+        # authenticated = dlg.logged_in
 
-        self.Bind(wx.EVT_CLOSE, self.OnAppExit)
+        # if authenticated:
+        #     self.Show(True)
+        # else:
+        #     dlg.Destroy()
+        #     self.Close()
+        #     SystemExit()
 
+        self.Show() # comment this line of code out in production
+        
+        # Set the aui frame manager
+        self.panel = pnl = MainAppPanel(self)
+        self.mgr = mgr = agw.AuiManager()
+        self.mgr.SetManagedWindow(pnl)
+        
         try:
             self.tbicon = CranTaskBarIcon(self)
         except Exception as error:
             self.tbicon = None
+        
+        self.st_bar  = StatBar(self)
+        self.SetStatusBar(self.st_bar)
+        
+        self.Bind(wx.EVT_WINDOW_DESTROY, self.closedialogs, self)
 
         # Set an application icon
-        self.SetIcon(wx.Icon('images/cherrytree.png'))
+        self.SetIcon(wx.Icon('cherrytree.png'))
 
         # Set Frame initial size and minimum frame size
-        self.SetInitialSize((950, 600))
-        self.SetMinSize((640, 480))
+        self.SetInitialSize((1200, 700))
+        self.SetMinSize((1200, 700))
 
-        self.panel = pnl = MainAppPanel(self)
-
-        self.center_panel = cpl = wx.Panel(pnl)
-
-        # Set the aui frame manager
-        self.mgr = agw.AuiManager()
-        self.mgr.SetManagedWindow(pnl)
+        self.center_panel = cpl = wx.Panel(pnl)      
+        self.allowAuiFloating = False
 
         self.BuildMenuBar()
-        self.BuildStatusBar()
 
-        icon_size = (10, 10)
-        img_dir = 'images/whiteboard/'
-
-        toolbar = wx.ToolBar(cpl, style=wx.TB_VERTICAL | wx.TB_TEXT | wx.TB_NODIVIDER)
+        toolbar = wx.ToolBar(cpl, style=wx.TB_VERTICAL | wx.TB_NODIVIDER)
+        icon_size = (30, 30)
         toolbar.SetToolBitmapSize(icon_size)
-        toolbar.AddTool(10, 'Home', wx.Bitmap(img_dir + '7out.png'), shortHelp='Go to Main Page')
-        toolbar.AddTool(20, 'Students', wx.Bitmap(img_dir + '2out.png'), shortHelp='Students')
-        toolbar.AddTool(30, 'Instructors', wx.Bitmap(img_dir + '3out.png'), shortHelp='Instructors')
-        toolbar.AddTool(40, 'Books', wx.Bitmap(img_dir + '4out.png'), shortHelp='Books')
-        toolbar.AddTool(50, 'SMS', wx.Bitmap(img_dir + '5out.png'), shortHelp='Send a text message.')
-        toolbar.AddTool(60, 'Email', wx.Bitmap(img_dir + '6out.png'), shortHelp='Send a mail.')
-        toolbar.AddTool(70, 'Reports', wx.Bitmap(img_dir + '10out.png'), shortHelp='Generate Student Reports')
-        toolbar.AddTool(80, 'Info', wx.Bitmap(img_dir + '11out.png'), shortHelp='Program Information')
-        toolbar.AddTool(90, 'Log Out', wx.Bitmap(img_dir + '12out.png'), shortHelp='Sign out of Cranberry')
-        toolbar.SetToolPacking(10)
+
+        # TODO: Use this tool for student related operations
+        # toolbar.AddTool(20, 'Students', wx.Bitmap('studentsout.png'), shortHelp='Students')
+        
+        toolbar.AddTool(60, 'Email', wx.Bitmap('envelopeout.png'), shortHelp='Send a mail.')
+        toolbar.AddTool(50, 'SMS', wx.Bitmap('chatout.png'), shortHelp='Send a text message.')
+        toolbar.AddTool(70, 'Reports', wx.Bitmap('cvout.png'), shortHelp='Generate Student Reports')
+        toolbar.AddTool(30, 'Settings', wx.Bitmap('usersetout.png'), shortHelp='Edit user related info')
+        toolbar.AddTool(90, 'Log Out', wx.Bitmap('exitout.png'), shortHelp='Sign out of Cranberry')
+        toolbar.AddTool(80, 'Info', wx.Bitmap('info1.png'), shortHelp='Program Information')
+       
+        toolbar.SetToolBitmapSize(icon_size)
 
         toolbar.Realize()
 
         # Bind some event handlers to toolbar
         #self.Bind(wx.EVT_TOOL, func, id=10)
         #self.Bind(wx.EVT_TOOL, func, id=20)
-        #self.Bind(wx.EVT_TOOL, func, id=30)
+        self.Bind(wx.EVT_TOOL, self.OnSettings, id=30)
         #self.Bind(wx.EVT_TOOL, func, id=40)
         self.Bind(wx.EVT_TOOL, self.OnSms, id=50)
         self.Bind(wx.EVT_TOOL, self.OnMail, id=60)
         #self.Bind(wx.EVT_TOOL, func, id=70)
-        #self.Bind(wx.EVT_TOOL, func, id=80)
-        #self.Bind(wx.EVT_TOOL, func, id=90)
+        self.Bind(wx.EVT_TOOL, self.OnAboutApp, id=80)
+        self.Bind(wx.EVT_TOOL, self.OnLogout, id=90)
 
         self.Centre(wx.BOTH)
 
-        tab_style = (wx.lib.agw.aui.auibook.AUI_NB_SMART_TABS | wx.lib.agw.aui.auibook.AUI_NB_NO_TAB_FOCUS)#|
-        #  wx.lib.agw.aui.auibook.AUI_NB_TAB_FIXED_WIDTH)
+        tab_style = (wx.lib.agw.aui.auibook.AUI_NB_SMART_TABS | wx.lib.agw.aui.auibook.AUI_NB_NO_TAB_FOCUS|
+         wx.lib.agw.aui.auibook.AUI_NB_TAB_FIXED_WIDTH)
 
         self.nb = nb = agw.auibook.AuiNotebook(cpl, agwStyle=tab_style)
         nb.SetArtProvider(agw.ChromeTabArt())
 
-        pages = [(HomePanel(nb), "Home "),
-                 (StaffPanel(nb), "Staff"),
-                 (StudentPanel(nb), "Student"),
-                 (CoursePanel(nb), "Courses"),
-                 (AttendancePanel(nb), "Attendance"),
-                 (FeePanel(nb), 'Fees'),
-                 (InventoryPanel(nb), 'Inventory'),
-                 (ReportPanel(nb), 'Reports')
-                 ]
-
-        for page, label in pages:
-            nb.AddPage(page, label)
-
         self.right_panel = rpnl = wx.Panel(pnl, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
+        
+        self.home = HomePanel(nb)
+
+        pages = [
+                (self.home, "Home", wx.Bitmap('homeout.png')),
+                (StaffPanel(nb, self.home), "Staff", wx.Bitmap('teacherout.png')),
+                (StudentPanel(nb, self.home), "Student", wx.Bitmap('studentsout.png')),
+                (CoursePanel(nb, self.home), "Courses", wx.Bitmap('courseout.png')),
+                (AttendancePanel(nb, self.home), "Attendance", wx.Bitmap('attendanceout.png')),
+                (FeePanel(nb, self.home), "Fees", wx.Bitmap('feesout.png')),
+                (InventoryPanel(nb, self.home), "Inventory", wx.Bitmap('itemsout.png')),
+                (ReportPanel(nb, self.home), "Reports", wx.Bitmap('report_cardout.png'))
+            ]
+
+        for page, label, bm in pages: nb.AddPage(page, label, bitmap=bm)
 
         # Add a search box to the right panel
         self.searchBox = sbox = wx.SearchCtrl(rpnl, style=wx.TE_PROCESS_ENTER)
-        sbox.ShowCancelButton(False)
+        font = wx.Font(wx.FontInfo(11).FaceName('Candara'))
+        sbox.SetFont(font)
+
+        sbox.SetForegroundColour('#333333')
+        search_bmp = wx.Bitmap('search.png')
+        cancel_bmp = wx.Bitmap('cancel.png')
+
+        sbox.SetSearchBitmap(search_bmp)
+        sbox.SetCancelBitmap(cancel_bmp)
+        sbox.ShowCancelButton(True)
         sbox.Bind(wx.EVT_SEARCHCTRL_CANCEL_BTN, lambda e: sbox.SetValue(''))
+        sbox.Bind(wx.EVT_TEXT_ENTER, self.OnSearch)
 
         # Add a event calendar to the right panel
-        self.cal = cal = adv.CalendarCtrl(rpnl, -1,
-                                          date=wx.DefaultDateTime, style=adv.CAL_SHOW_HOLIDAYS)
+        self.cal = cal = adv.CalendarCtrl(rpnl, -1, date=wx.DefaultDateTime, style=adv.CAL_SHOW_HOLIDAYS)
 
         lbox = wx.BoxSizer(wx.HORIZONTAL)
         lbox.Add(toolbar, 0, wx.EXPAND)
@@ -688,15 +1816,27 @@ class AppFrame(wx.Frame):
         rpnl.SetSizer(rbox)
 
         # Use the aui manager to set up everything
-        self.mgr.AddPane(cpl, agw.AuiPaneInfo().CenterPane().MinSize((685, -1)).Name('Notebook').
-                         CloseButton(False))
-        self.mgr.AddPane(rpnl, agw.AuiPaneInfo().Right().Layer(5).
-                         BestSize((240, -1)).MinSize((240, -1)).Caption('Search').
-                         CloseButton(False).Name('AdminPane'))
+        self.mgr.AddPane(cpl, agw.AuiPaneInfo().CenterPane().MinSize((685, -1)).Name('bookPane').CloseButton(False))
+        self.mgr.AddPane(rpnl, agw.AuiPaneInfo().Right().Layer(2).BestSize((240, -1)).MinSize((240, -1)).
+                Floatable(self.allowAuiFloating).FloatingSize((240, 700)).Caption('Search').CloseButton(False)
+                .Name('AdminPane').Fixed())
 
         self.mgr.SetArtProvider(agw.ModernDockArt(self))
         self.mgr.SavePerspective()
+
         self.mgr.Update()
+
+    def OnLogout(self, event):
+
+        if wx.MessageBox(message='Are you sure you want to log out?', caption='Log Out', style=wx.YES_NO|wx.CENTER) == wx.YES:
+            self.Hide()
+            dlg = LoginDialog()
+            dlg.ShowModal()
+            authenticated = dlg.logged_in
+            if authenticated: self.Show(True)
+            else: dlg.Destroy(); self.Close(); SystemExit()
+        
+        else:pass
 
     def BuildMenuBar(self):
         # Main Menu
@@ -706,10 +1846,10 @@ class AppFrame(wx.Frame):
         menu = wx.Menu()
 
         wx.App.SetMacExitMenuItemId(9123)
-        exit = wx.MenuItem(menu, 9123, '&Exit\tCtrl-Q', 'Close the Cranberry App', wx.ITEM_NORMAL)
-        # exit.SetBitmap(wx.Bitmap('images/cancel.png'))
-        menu.Append(exit)
-        self.Bind(wx.EVT_MENU, self.OnAppExit, exit)
+        exitapp = wx.MenuItem(menu, 9123, '&Exit\tCtrl-Q', 'Close the Cranberry App', wx.ITEM_NORMAL)
+        # exit.SetBitmap(wx.Bitmap('home.png'))
+        menu.Append(exitapp)
+        self.Bind(wx.EVT_MENU, self.closedialogs, exitapp)
         self.menubar.Append(menu, '&File')
 
         # Build a help menu
@@ -720,11 +1860,48 @@ class AppFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnAboutApp, about)
         self.menubar.Append(menu, '&Help')
         self.SetMenuBar(self.menubar)
-
-    def BuildStatusBar(self):
-        self.st_bar = sb = StatBar(self)
-        self.SetStatusBar(sb)
     
+    def OnSearch(self, event):
+        search = Controller.Search().search
+        searchword = self.searchBox.GetValue()
+        f = search(searchword)
+        for i in f:
+            print(i.firstname)
+    
+    def OnSettings(self, event):
+        if not hasattr(self, 'new_id'):
+            self.new_id = wx.NewIdRef()
+            self.edit_id = wx.NewIdRef()
+            self.remove_id = wx.NewIdRef()     
+            # self.Bind(wx.EVT_MENU, self.OnNewItem, id=self.new_id) 
+            # self.Bind(wx.EVT_MENU, self.OnRemoveItem, id=self.remove_id)
+            # self.Bind(wx.EVT_MENU, self.OnEditItem, id=self.edit_id)
+
+        menu = wx.Menu()
+
+        new_usr = wx.MenuItem(menu, self.new_id, 'Create new user')
+        new_usr.SetBitmap(wx.Bitmap('userout.png'))
+        new_usr.SetBackgroundColour('grey30')
+        new_usr.SetTextColour('white')
+        new_usr.SetMarginWidth(10)
+
+        del_usr = wx.MenuItem(menu, self.remove_id, 'Remove a user')
+        del_usr.SetBitmap(wx.Bitmap('delout.png'))
+        del_usr.SetBackgroundColour('grey30')
+        del_usr.SetTextColour('white')
+
+        edit_usr = wx.MenuItem(menu,self.edit_id, 'Edit user login')
+        edit_usr.SetBitmap(wx.Bitmap('edit_profileout.png'))
+        edit_usr.SetBackgroundColour('grey30')
+        edit_usr.SetTextColour('white')
+
+        menu.Append(new_usr)
+        menu.Append(del_usr)
+        menu.Append(edit_usr)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
+
     def OnSms(self, event):
       with SmsPad(self) as form_dlg:  # Form dialog as a context manager
             form_dlg.CenterOnScreen()
@@ -755,7 +1932,6 @@ class AppFrame(wx.Frame):
                 message="Text message not sent!",
                 parent=None, flags=wx.ICON_ERROR)
             notify.Show(timeout=40)
-            print(str(error))
     
     def OnMail(self, event):
         with MailPad(self) as form_dlg:  # Form dialog as a context manager
@@ -790,6 +1966,26 @@ class AppFrame(wx.Frame):
                 parent=None, flags=wx.ICON_ERROR)
             notify.Show(timeout=40)
     
+    def closedialogs(self, event=None):
+        self.mgr.UnInit()
+        self.st_bar.timer.Stop()
+        del self.st_bar.timer
+
+        if self.tbicon is not None:
+            self.tbicon.RemoveIcon()
+            self.tbicon.Destroy()
+
+        wins = wx.GetTopLevelWindows()
+        for i in range(len(wins)):
+            dialog = wins[i]
+            if isinstance(dialog, wx.Dialog):
+                dialog.Destroy()
+            else:
+                try:
+                    dialog.Destroy()
+                except Exception as e:
+                    pass
+    
 
     def OnAppExit(self, event):
         self.mgr.UnInit()
@@ -797,27 +1993,40 @@ class AppFrame(wx.Frame):
         del self.st_bar.timer
 
         if self.tbicon is not None:
+            self.tbicon.RemoveIcon()
             self.tbicon.Destroy()
+
         self.Destroy()
 
     def OnAboutApp(self, event):
         info = adv.AboutDialogInfo()
 
-        info.SetIcon(wx.Icon('images/cherrytree.png'))
-        info.SetName('Cranberry SMS')
-        info.SetVersion('0.1')
-        info.SetDescription(description)
-        info.SetCopyright('(C) 2019 Prince Oforh Asiedu .')
-        info.SetLicence(licence)
-        info.AddDeveloper(developer)
+        info.Icon = wx.Icon('cherrytree.png')
+        info.Name = 'Cranberry SMS'
+        info.Version = '0.1'
+        info.Description = wordwrap(
+            "Cranberry School Management System is an advanced school management system for "
+            "the Windows operating system. It has many built-in components for performing "
+            "school admininstation tasks. ",600, wx.ClientDC(self), margin=10)
+
+        info.Copyright = '(C) 2019 Prince Oforh Asiedu .'
+        info.Licence = "The MIT License"
+
+        info.SetDevelopers([__author__])
 
         adv.AboutBox(info)
 
 
 class CranberryInitScreen(SplashScreen):
     def __init__(self):
-        bmp = wx.Bitmap('images/cr3.png')
+        bmp = wx.Bitmap('cr3.png')
         SplashScreen.__init__(self, bmp, wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT, 5000, None, -1)
+        self._msg = wx.StaticText(self)
+        self.CreateStatusBar()
+        sbarHeight = self.StatusBar.Size.height
+        self.SetSize((self.Size.width,sbarHeight + bmp.Height))
+
+        self.Show()
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.fc = wx.CallLater(6500, self.show_main)
 
@@ -834,8 +2043,7 @@ class CranberryInitScreen(SplashScreen):
             self.show_main()
 
     def show_main(self):
-        self.frame = AppFrame(None, title='Cranberry SMS')
-        self.frame.Show()
+        frame = AppFrame(None, title='Cranberry')
         if self.fc.IsRunning():
             self.Raise()
 
@@ -843,21 +2051,22 @@ class CranberryInitScreen(SplashScreen):
 class AppObject(wx.App):
 
     def OnInit(self):
+        # Control some system options.
+        wx.SystemOptions.SetOption("msw.remap", 2)
+        wx.SystemOptions.SetOption("msw.notebook.themed-background", 1)
+        wx.SystemOptions.SetOption("msw.display.directdraw", 0)
         wx.SystemOptions.SetOption("mac.window-plain-transition", 1)
-        self.SetAppName("Cranberry SMS")
+        self.SetAppName("Cranberry")
 
         # App initialization screen
-        # splash = CranberryInitScreen()
-        # splash.Show()
-        self.frame = AppFrame(None, title='Cranberry SMS')
-        self.frame.Show()
+        # CranberryInitScreen()
+        frame = AppFrame(None, title='Cranberry')
         return True
 
 
 def main():
-    app = AppObject()
-    app.MainLoop()
-
+    pass
 
 if __name__ == '__main__':
-    main()
+    app = AppObject(False)
+    app.MainLoop()
