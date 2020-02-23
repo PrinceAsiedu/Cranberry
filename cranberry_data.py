@@ -73,11 +73,11 @@ class Access_Session:
 	def get_user(self, username):
 		query = self.session.query(Access)
 		
-		try: user = query.filter_by(aname=username).one()
+		try: user = query.filter_by(aname=username).one(); return user
 		except NoResultFound:
 			msg = 'User not found - {}'.format(username)
 			raise UserNotFound(msg)
-		return user
+		
 
 	def get_user_by_id(self, aid):
 		query = self.session.query(Access)
@@ -124,6 +124,13 @@ class Access_Session:
 		except Exception as error:
 			error_msg = error.args[0]
 			raise UnknownDatabaseError(error_msg)
+	
+	def get_users(self):
+		try: users = self.session.query(Access).all(); return users
+		except Exception as error: raise error
+	
+	def get_count(self):
+		return len(self.get_users())
 	
 
 class Staff(Base):

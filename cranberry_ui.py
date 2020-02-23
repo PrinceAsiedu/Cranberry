@@ -20,7 +20,7 @@ __version__     = "1.2"
 __date__        = "February, 2020"
 __author__      = "Prince Oforh Asiedu"
 __email__       = "prince14asiedu@gmail.com"
-__copyright__   = "(c) Prince Oforh Asiedu"
+__copyright__   = "(c) Prince Oforh Asiedu 2020"
 
 
 import time
@@ -136,6 +136,88 @@ class DateValidator(wx.Validator):
     pass
 
 
+class PasswordValidator(wx.Validator):
+    """ This validator is used to ensure that 
+        the contents of two password fields match.
+    """
+
+    def __init__(self, flag=None, txtCtrl=None):
+        wx.Validator.__init__(self)
+        self.flag = flag
+        self.pyVar = txtCtrl
+        self.Bind(wx.EVT_CHAR, self.OnChar)
+
+    def Clone(self):
+        return PasswordValidator(self.flag)
+
+    def Validate(self, win):
+        """ Validate the contents of two text controls.
+        """
+        textCtrl1 = self.pyVar.GetWindow()
+        textCtrl = self.GetWindow()
+        
+        passw1 = textCtrl1.GetValue()
+        passw2 = textCtrl.GetValue()
+
+        if not passw1 == passw2:
+
+            wx.MessageBox("Make sure to fill the entire form!", "Error")
+            textCtrl.SetBackgroundColour("pink")
+            textCtrl.SetFocus()
+            textCtrl.Refresh()
+            return False
+        else:
+            textCtrl.SetBackgroundColour('lightgreen')
+            textCtrl.Refresh()
+            return True
+
+    def TransferToWindow(self):
+        """ Transfer data from validator to window.
+
+            The default implementation returns False, indicating that an error
+            occurred.  We simply return True, as we don't do any data transfer.
+        """
+        return True # Prevent wxDialog from complaining.
+
+    def TransferFromWindow(self):
+        """ Transfer data from window to validator.
+
+            The default implementation returns False, indicating that an error
+            occurred.  We simply return True, as we don't do any data transfer.
+        """
+        return True # Prevent wxDialog from complaining.
+
+    def OnChar(self, event):
+        key = event.GetKeyCode()
+
+        if key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255:
+            event.Skip()
+            return
+
+        if self.flag == ALPHA_NUM and (chr(key) in string.ascii_letters+string.digits+'@.- '):
+            event.Skip()
+            return
+
+        if self.flag == ALPHA_ONLY and chr(key) in string.ascii_letters+' ':
+            event.Skip()
+            return
+
+        if self.flag == DIGIT_ONLY and chr(key) in string.digits:
+            event.Skip()
+            return
+
+        if self.flag == PRINTABLE and chr(key) in string.printable:
+            event.Skip()
+            return
+
+        if not wx.Validator.IsSilent():
+            wx.Bell()
+
+        # Returning without calling event.Skip eats the event before it
+        # gets to the text control
+        return
+
+
 class HomePanel(wx.Panel):
 
     def __init__(self, parent):
@@ -144,7 +226,6 @@ class HomePanel(wx.Panel):
         FONT = wx.Font(wx.FontInfo(15).FaceName('Candara').Bold().Italic())
 
         cdb.updateColourDB()
-
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         first_horz_box = wx.BoxSizer(wx.HORIZONTAL)
@@ -367,19 +448,19 @@ class StaffPanel(wx.Panel):
         # colour for platebuttons 
         col = wx.Colour('dodgerblue')
         # add staff member button
-        add_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('addout.png'), label='New', name='staff_form')
+        add_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('add1.png'), label='New')
         add_staff.SetFont(btnFont)
         add_staff.SetPressColor(col)
         add_staff.Bind(wx.EVT_BUTTON, self.OnNewStaff)
 
         # remove staff member button
-        remove_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('deleteout.png'), label='Remove')
+        remove_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Remove')
         remove_staff.SetFont(btnFont)
         remove_staff.SetPressColor(col)
         remove_staff.Bind(wx.EVT_BUTTON, self.OnRemoveStaff)
 
         # save changes made to staff data
-        save_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('pinout.png'), label='Edit')
+        save_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit')
         save_staff.SetFont(btnFont)
         save_staff.SetPressColor(col)
         save_staff.Bind(wx.EVT_BUTTON, self.OnEditEmployee)
@@ -459,9 +540,10 @@ class StaffPanel(wx.Panel):
     def OnRemoveStaff(self, event):
         try:
             rows = self.dvlc.GetItemCount()
-            if wx.MessageBox('Are you sure you want to continue', 'Delete Employee?', style=wx.YES_NO) == wx.YES:
-                for row in range(rows):
-                    if self.dvlc.IsRowSelected(row):
+            for row in range(rows):
+                if self.dvlc.IsRowSelected(row):
+                    if wx.MessageBox('Are you sure you want to continue', 'Delete Employee?', style=wx.YES_NO) == wx.YES:
+                
                         sid = self.dvlc.GetValue(row, 0)
                         employee = str(self.dvlc.GetValue(row, 1) + ' ' + self.dvlc.GetValue(row, 2))
                         Controller.Staff().delete_worker(sid)
@@ -476,9 +558,8 @@ class StaffPanel(wx.Panel):
                                 parent=None, flags=wx.ICON_INFORMATION)
                         notify.Show(timeout=20)
                     
-                    else:continue
-            
-            else:pass
+                else:
+                    wx.MessageBox('Please select an employee first', 'Error', wx.ICON_ERROR)
 
         except Exception as error:
             notify = adv.NotificationMessage(
@@ -555,13 +636,13 @@ class StaffPanel(wx.Panel):
         menu = wx.Menu()
 
         new_wrk = wx.MenuItem(menu, self.new_id, 'New Employee')
-        new_wrk.SetBitmap(wx.Bitmap('addout.png'))
+        new_wrk.SetBitmap(wx.Bitmap('add1.png'))
 
         del_wrk = wx.MenuItem(menu, self.remove_id, 'Remove Employee')
-        del_wrk.SetBitmap(wx.Bitmap('deleteout.png'))
+        del_wrk.SetBitmap(wx.Bitmap('trashout.png'))
 
         edit_wrk = wx.MenuItem(menu,self.edit_id, 'Edit Employee Details')
-        edit_wrk.SetBitmap(wx.Bitmap('pinout.png'))
+        edit_wrk.SetBitmap(wx.Bitmap('push1.png'))
 
         menu.Append(new_wrk)
         menu.Append(del_wrk)
@@ -674,19 +755,19 @@ class StudentPanel(wx.Panel):
         # colour for platebuttons 
         col = wx.Colour('dodgerblue')
         # new student button
-        new_student = pbtn(self, id=100, bmp=wx.Bitmap('addout.png'), label='New')
+        new_student = pbtn(self, id=100, bmp=wx.Bitmap('add1.png'), label='New')
         new_student.SetFont(btnFont)
         new_student.SetPressColor(col)
         new_student.Bind(wx.EVT_BUTTON, self.OnNewStudent)
 
         # remove student button
-        remove_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('deleteout.png'), label='Remove')
+        remove_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Remove')
         remove_student.SetFont(btnFont)
         remove_student.SetPressColor(col)
         remove_student.Bind(wx.EVT_BUTTON, self.OnRemoveStudent)
 
         # save changes made to student data button
-        edit_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('pinout.png'), label='Edit')
+        edit_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit')
         edit_student.SetFont(btnFont)
         edit_student.SetPressColor(col)
         edit_student.Bind(wx.EVT_BUTTON, self.OnEditStudent)
@@ -878,13 +959,13 @@ class StudentPanel(wx.Panel):
         menu = wx.Menu()
            
         new_stu = wx.MenuItem(menu, self.new_id, 'New Student')
-        new_stu.SetBitmap(wx.Bitmap('addout.png'))
+        new_stu.SetBitmap(wx.Bitmap('add1.png'))
 
         del_stu = wx.MenuItem(menu, self.remove_id, 'Remove Student')
-        del_stu.SetBitmap(wx.Bitmap('deleteout.png'))
+        del_stu.SetBitmap(wx.Bitmap('trashout.png'))
 
         edit_stu = wx.MenuItem(menu,self.edit_id, 'Edit Student Information')
-        edit_stu.SetBitmap(wx.Bitmap('pinout.png'))
+        edit_stu.SetBitmap(wx.Bitmap('push1.png'))
 
         menu.Append(new_stu)
         menu.Append(del_stu)
@@ -961,19 +1042,19 @@ class CoursePanel(wx.Panel):
         # colour for platebuttons 
         col = wx.Colour('dodgerblue')
         # new course button
-        new_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('addout.png'), label='New')
+        new_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('add1.png'), label='New')
         new_course.SetFont(btnFont)
         new_course.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnNewCourse, new_course)  # Bind function to button
 
         # remove course button
-        remove_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('deleteout.png'), label='Remove')
+        remove_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Remove')
         remove_course.SetFont(btnFont)
         remove_course.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnRemoveCourse, remove_course)
 
         # save changes made to course data button
-        save_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('pinout.png'), label='Edit')
+        save_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit')
         save_course.SetFont(btnFont)
         save_course.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnEditCourse, save_course)
@@ -1142,13 +1223,13 @@ class CoursePanel(wx.Panel):
         menu = wx.Menu()
 
         new_sub = wx.MenuItem(menu, self.new_id, 'New Subject')
-        new_sub.SetBitmap(wx.Bitmap('addout.png'))
+        new_sub.SetBitmap(wx.Bitmap('add1.png'))
 
         del_sub = wx.MenuItem(menu, self.remove_id, 'Remove Subject')
-        del_sub.SetBitmap(wx.Bitmap('deleteout.png'))
+        del_sub.SetBitmap(wx.Bitmap('trashout.png'))
 
         edit_sub = wx.MenuItem(menu,self.edit_id, 'Edit Subject Information')
-        edit_sub.SetBitmap(wx.Bitmap('pinout.png'))
+        edit_sub.SetBitmap(wx.Bitmap('push1.png'))
 
         menu.Append(new_sub)
         menu.Append(del_sub)
@@ -1251,19 +1332,19 @@ class InventoryPanel(wx.Panel):
         # colour for platebuttons 
         col = wx.Colour('dodgerblue')
         # new item button
-        new_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('addout.png'), label='New')
+        new_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('add1.png'), label='New')
         new_item.SetFont(btnFont)
         new_item.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnNewItem, new_item)
 
         # remove item button
-        remove_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('deleteout.png'), label='Remove')
+        remove_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Remove')
         remove_item.SetFont(btnFont)
         remove_item.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnRemoveItem, remove_item)
 
         # save changes made to item info button
-        save_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('pinout.png'), label='Edit')
+        save_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit')
         save_item.SetFont(btnFont)
         save_item.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnEditItem, save_item)
@@ -1450,13 +1531,13 @@ class InventoryPanel(wx.Panel):
         menu = wx.Menu()
 
         new_itm = wx.MenuItem(menu, self.new_id, 'New Student')
-        new_itm.SetBitmap(wx.Bitmap('addout.png'))
+        new_itm.SetBitmap(wx.Bitmap('add1.png'))
 
         del_itm = wx.MenuItem(menu, self.remove_id, 'Remove Student')
-        del_itm.SetBitmap(wx.Bitmap('deleteout.png'))
+        del_itm.SetBitmap(wx.Bitmap('trashout.png'))
 
         edit_itm = wx.MenuItem(menu,self.edit_id, 'Edit Student Information')
-        edit_itm.SetBitmap(wx.Bitmap('pinout.png'))
+        edit_itm.SetBitmap(wx.Bitmap('push1.png'))
 
         menu.Append(new_itm)
         menu.Append(del_itm)
@@ -1664,7 +1745,7 @@ class LoginDialog(wx.Dialog):
  
         self.SetSizer(main_sizer)
  
-    def onLogin(self, event):
+    def onLogin(self, event=None):
         """
         Check credentials and login
         """
@@ -1681,47 +1762,59 @@ class LoginDialog(wx.Dialog):
             self.password.SetValue('')
             err_msg = error.args[0]
             wx.MessageBox('Error signing in\n {}'.format(AuthenticationError(err_msg)), 'Login Error')
- 
+
+
+class NewUserForm(sc.SizedDialog):
+    def __init__(self, parent):
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
+
+        sc.SizedDialog.__init__(self, None, -1, 'New User', size=(250, 300), style=FLAGS)
+        cPane = self.GetContentsPane()
+        pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
+        pane.SetSizerProps(expand=True, proportion=1)
+        pane.SetSizerType("vertical")
+
+        wx.StaticText(pane, -1, 'Username')
+        self.username = wx.TextCtrl(pane, -1, '', validator=FormValidator(ALPHA_ONLY))
+        self.username.SetSizerProps(expand=True)
+        wx.StaticText(pane, -1, 'Password')
+        self.pass_fst = wx.TextCtrl(pane, -1, '', style=wx.TE_PASSWORD, validator=FormValidator(PRINTABLE))
+        self.pass_fst.SetSizerProps(expand=True)
+        wx.StaticText(pane, -1, 'Enter Password Again')
+        self.pass_snd = wx.TextCtrl(pane, -1, '', style=wx.TE_PASSWORD)#, validator=PasswordValidator(PRINTABLE, self.pass_fst))
+        self.pass_snd.SetSizerProps(expand=True)
+
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+
+
+class RemoveUserDialog(sc.SizedDialog):
+    pass
+
+
+class EditUserDialog(sc.SizedDialog):
+    pass
+
 
 class AppFrame(wx.Frame):
+
     def __init__(self, parent, title=''):
         FLAGS = (wx.FULL_REPAINT_ON_RESIZE |wx.MINIMIZE_BOX | wx.SYSTEM_MENU | 
                 wx.CAPTION | wx.CLOSE_BOX | wx.FRAME_SHAPED)
         super(AppFrame, self).__init__(parent=parent, title=title, style=FLAGS)
-
-        self.Bind(wx.EVT_CONTEXT_MENU, self.OnSettings)
-        # Ask user to login
-       
-        # dlg = LoginDialog()
-        # dlg.ShowModal()
-        # authenticated = dlg.logged_in
-
-        # if authenticated:
-        #     self.Show(True)
-        # else:
-        #     dlg.Destroy()
-        #     self.Close()
-        #     SystemExit()
-
-        self.Show() # comment this line of code out in production
+        
+        # Set an application icon
+        self.SetIcon(wx.Icon('cherrytree.png'))
         
         # Set the aui frame manager
         self.panel = pnl = MainAppPanel(self)
         self.mgr = mgr = agw.AuiManager()
         self.mgr.SetManagedWindow(pnl)
         
-        try:
-            self.tbicon = CranTaskBarIcon(self)
-        except Exception as error:
-            self.tbicon = None
+        try: self.tbicon = CranTaskBarIcon(self)
+        except Exception as error: self.tbicon = None
         
         self.st_bar  = StatBar(self)
         self.SetStatusBar(self.st_bar)
-        
-        self.Bind(wx.EVT_WINDOW_DESTROY, self.closedialogs, self)
-
-        # Set an application icon
-        self.SetIcon(wx.Icon('cherrytree.png'))
 
         # Set Frame initial size and minimum frame size
         self.SetInitialSize((1200, 700))
@@ -1729,6 +1822,9 @@ class AppFrame(wx.Frame):
 
         self.center_panel = cpl = wx.Panel(pnl)      
         self.allowAuiFloating = False
+
+        self.Bind(wx.EVT_WINDOW_DESTROY, self.closedialogs, self)
+        self.Bind(wx.EVT_CONTEXT_MENU, self.OnSettings)
 
         self.BuildMenuBar()
 
@@ -1751,17 +1847,13 @@ class AppFrame(wx.Frame):
         toolbar.Realize()
 
         # Bind some event handlers to toolbar
-        #self.Bind(wx.EVT_TOOL, func, id=10)
-        #self.Bind(wx.EVT_TOOL, func, id=20)
+
         self.Bind(wx.EVT_TOOL, self.OnSettings, id=30)
-        #self.Bind(wx.EVT_TOOL, func, id=40)
         self.Bind(wx.EVT_TOOL, self.OnSms, id=50)
         self.Bind(wx.EVT_TOOL, self.OnMail, id=60)
-        #self.Bind(wx.EVT_TOOL, func, id=70)
         self.Bind(wx.EVT_TOOL, self.OnAboutApp, id=80)
         self.Bind(wx.EVT_TOOL, self.OnLogout, id=90)
-
-        self.Centre(wx.BOTH)
+        #self.Bind(wx.EVT_TOOL, func, id=70)
 
         tab_style = (wx.lib.agw.aui.auibook.AUI_NB_SMART_TABS | wx.lib.agw.aui.auibook.AUI_NB_NO_TAB_FOCUS|
          wx.lib.agw.aui.auibook.AUI_NB_TAB_FIXED_WIDTH)
@@ -1823,8 +1915,33 @@ class AppFrame(wx.Frame):
 
         self.mgr.SetArtProvider(agw.ModernDockArt(self))
         self.mgr.SavePerspective()
-
+        self.Centre(wx.BOTH)
         self.mgr.Update()
+
+        # If no user accounts exist then create one
+        self.users = Controller.Admin().get_count()
+        # if self.users == 0: 
+            
+        #     if self.OnCreateUser(): self.Show()
+        #     else: self.Close()
+            
+        # elif self.users >= 1:
+            
+        #     dlg = LoginDialog()
+        #     dlg.ShowModal()
+        #     authenticated = dlg.logged_in
+
+        #     if authenticated:
+        #         self.Show(True)                    
+            
+        #     else:
+        #         dlg.Destroy()
+        #         self.Close()
+        #         SystemExit()
+        
+        # else: pass
+
+        self.Show()
 
     def OnLogout(self, event):
 
@@ -1873,34 +1990,74 @@ class AppFrame(wx.Frame):
             self.new_id = wx.NewIdRef()
             self.edit_id = wx.NewIdRef()
             self.remove_id = wx.NewIdRef()     
-            # self.Bind(wx.EVT_MENU, self.OnNewItem, id=self.new_id) 
-            # self.Bind(wx.EVT_MENU, self.OnRemoveItem, id=self.remove_id)
-            # self.Bind(wx.EVT_MENU, self.OnEditItem, id=self.edit_id)
+            self.Bind(wx.EVT_MENU, self.OnCreateUser, id=self.new_id)
+            self.Bind(wx.EVT_MENU, self.OnRemoveUser, id=self.remove_id)
+            self.Bind(wx.EVT_MENU, self.OnEditUser, id=self.edit_id)
 
         menu = wx.Menu()
 
-        new_usr = wx.MenuItem(menu, self.new_id, 'Create new user')
-        new_usr.SetBitmap(wx.Bitmap('userout.png'))
-        new_usr.SetBackgroundColour('grey30')
-        new_usr.SetTextColour('white')
-        new_usr.SetMarginWidth(10)
+        bgcol = 'grey30'
+        fgcol = 'white'
 
-        del_usr = wx.MenuItem(menu, self.remove_id, 'Remove a user')
-        del_usr.SetBitmap(wx.Bitmap('delout.png'))
-        del_usr.SetBackgroundColour('grey30')
-        del_usr.SetTextColour('white')
+        menu_items = [
+            [self.new_id, 'Create new user', 'newuser.png'],
+            [self.remove_id, 'Remove a user', 'remuser.png'], 
+            [self.edit_id, 'Edit user login', 'edit_profileout.png']
+        ]
+        
+        for item in menu_items:
+            mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
+            mi.SetBitmap(wx.Bitmap(item[2]))
+            mi.SetBackgroundColour(bgcol)
+            mi.SetTextColour(fgcol)
+            menu.Append(mi)
 
-        edit_usr = wx.MenuItem(menu,self.edit_id, 'Edit user login')
-        edit_usr.SetBitmap(wx.Bitmap('edit_profileout.png'))
-        edit_usr.SetBackgroundColour('grey30')
-        edit_usr.SetTextColour('white')
-
-        menu.Append(new_usr)
-        menu.Append(del_usr)
-        menu.Append(edit_usr)
+        if self.users <= 1: menu.Enable(self.remove_id, False)
+        if self.users == 0: menu.Enable(self.edit_id, False)
 
         self.PopupMenu(menu)
         menu.Destroy()
+    
+    def OnCreateUser(self, event=None):
+        with NewUserForm(self) as dlg: 
+            dlg.CenterOnScreen()
+            if dlg.ShowModal() == wx.ID_OK:
+                try: 
+                    user_info = self.fetch_user_form(dlg)
+                    self.saveUser(user_info)
+                except Exception as error: raise error
+            else: 
+                dlg.Destroy() # if creating a new user is cancelled then close dialog
+    
+    def fetch_user_form(self, userform):
+        uname = userform.username.GetValue()
+        passw = userform.pass_snd.GetValue()
+        user = (uname, passw)
+        return user
+
+    def saveUser(self, user):
+        try:
+            uname, passw = user
+            Controller.Admin().add_user(uname, passw)
+            
+            notify = adv.NotificationMessage(
+                title="User Account Creation",
+                message="New user created successfully",
+                parent=None, flags=wx.ICON_INFORMATION)
+            notify.Show(timeout=20)
+        
+        except Exception as error:
+            notify = adv.NotificationMessage(
+                title="User Account Creation",
+                message="User account creation unsuccessful",
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=20)
+
+    def OnRemoveUser(self, event):
+        print('This also works')
+
+    def OnEditUser(self, event):
+        pass
 
     def OnSms(self, event):
       with SmsPad(self) as form_dlg:  # Form dialog as a context manager
@@ -1986,7 +2143,6 @@ class AppFrame(wx.Frame):
                 except Exception as e:
                     pass
     
-
     def OnAppExit(self, event):
         self.mgr.UnInit()
         self.st_bar.timer.Stop()
@@ -2003,13 +2159,13 @@ class AppFrame(wx.Frame):
 
         info.Icon = wx.Icon('cherrytree.png')
         info.Name = 'Cranberry SMS'
-        info.Version = '0.1'
+        info.Version = __version__
         info.Description = wordwrap(
             "Cranberry School Management System is an advanced school management system for "
             "the Windows operating system. It has many built-in components for performing "
             "school admininstation tasks. ",600, wx.ClientDC(self), margin=10)
 
-        info.Copyright = '(C) 2019 Prince Oforh Asiedu .'
+        info.Copyright = __copyright__
         info.Licence = "The MIT License"
 
         info.SetDevelopers([__author__])
@@ -2059,14 +2215,15 @@ class AppObject(wx.App):
         self.SetAppName("Cranberry")
 
         # App initialization screen
-        # CranberryInitScreen()
-        frame = AppFrame(None, title='Cranberry')
+        CranberryInitScreen()
+        # frame = AppFrame(None, title='Cranberry')
         return True
 
 
-def main():
-    pass
-
-if __name__ == '__main__':
+def main(): 
     app = AppObject(False)
     app.MainLoop()
+    
+
+if __name__ == '__main__': 
+    main()

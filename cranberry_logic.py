@@ -285,7 +285,8 @@ class Admin(model.Access_Session):
 		except Exception as error: raise error
 
 	def delete_user(self, uid):
-		pass
+		try: self.remove_superuser(uid)
+		except Exception as error: raise error
 	
 	def authenticate(self, username, password):
 		user = self.fetch_user(username)
@@ -297,6 +298,9 @@ class Admin(model.Access_Session):
 			self.logged_in = True
 		
 		return self.logged_in
+
+	def user_total(self):
+		return self.get_count()
 
 
 class Search:

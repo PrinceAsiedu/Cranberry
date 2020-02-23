@@ -3,8 +3,7 @@ from wx.adv import SplashScreen
 
 class ProgressSplash(SplashScreen):
     def __init__(self, bmp, splashStyle, timeout, parent):
-        super(ProgressSplash, self).__init__(bmp, splashStyle,
-        timeout, parent)
+        super(ProgressSplash, self).__init__(bmp, splashStyle, timeout, parent)
         self._msg = wx.StaticText(self)
         # Create status display area
         self.CreateStatusBar()
@@ -22,7 +21,7 @@ class SlowStartingApp(wx.App):
     def OnInit(self):
         self.mainw = wx.Frame(None, title="MyApp")
         bmp = wx.Bitmap('cr3.png')
-        splashStyle = wx.adv.SPLASH_CENTRE_ON_SCREEN|wx.adv.SPLASH_NO_TIMEOUT
+        splashStyle = wx.adv.SPLASH_CENTRE_ON_SCREEN
         self.splash = ProgressSplash(bmp, splashStyle,-1, self.mainw)
         self.splash.Show()
         # Begin the application setup tasks
