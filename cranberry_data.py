@@ -109,16 +109,16 @@ class Access_Session:
 			else: 
 				raise UnknownDatabaseError(error_msg)
 
-	def remove_superuser(self, aid):
+	def remove_user(self, uname):
 		try:		
-			superuser = self.get_superuser(aid)
+			superuser = self.get_user(uname)
 			self.session.delete(superuser)
 			self.session.flush()
 			self.session.commit()
 						
 		except NoResultFound:
 			self.session.rollback()  
-			msg = 'User not found - {}'.format(aid)
+			msg = 'User not found - {}'.format(uname)
 			raise UserNotFound(msg)
 
 		except Exception as error:

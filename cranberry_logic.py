@@ -285,14 +285,14 @@ class Admin(model.Access_Session):
 		except Exception as error: raise error
 
 	def delete_user(self, uid):
-		try: self.remove_superuser(uid)
+		try: self.remove_user(uid)
 		except Exception as error: raise error
 	
 	def authenticate(self, username, password):
 		user = self.fetch_user(username)
 
 		if not bcrypt.checkpw(password.encode(), user.access):
-			msg = 'Incorrect password for {}'.format(username)
+			msg = 'Wrong username or password'
 			raise AuthenticationError(msg)
 		else:
 			self.logged_in = True
@@ -426,7 +426,7 @@ def wxdate2pydate(date):
 		except Exception as error: raise error
 
 def main():
-	pass
+	Admin().delete_user('PrinceA')
 	
 
 if __name__ == '__main__':

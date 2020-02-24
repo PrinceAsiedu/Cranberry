@@ -141,28 +141,28 @@ class PasswordValidator(wx.Validator):
         the contents of two password fields match.
     """
 
-    def __init__(self, flag=None, txtCtrl=None):
+    def __init__(self, flag, txtCtrl):
         wx.Validator.__init__(self)
         self.flag = flag
         self.pyVar = txtCtrl
         self.Bind(wx.EVT_CHAR, self.OnChar)
 
     def Clone(self):
-        return PasswordValidator(self.flag)
+        return PasswordValidator(self.flag, self.pyVar)
 
     def Validate(self, win):
         """ Validate the contents of two text controls.
         """
-        textCtrl1 = self.pyVar.GetWindow()
         textCtrl = self.GetWindow()
         
-        passw1 = textCtrl1.GetValue()
+        passw1 = self.pyVar.GetValue()
         passw2 = textCtrl.GetValue()
 
         if not passw1 == passw2:
 
-            wx.MessageBox("Make sure to fill the entire form!", "Error")
+            wx.MessageBox("Passwords do not match!", "Error")
             textCtrl.SetBackgroundColour("pink")
+            self.pyVar.SetBackgroundColour("pink")
             textCtrl.SetFocus()
             textCtrl.Refresh()
             return False
@@ -1711,39 +1711,46 @@ class LoginDialog(wx.Dialog):
     """
     Class to define login dialog
     """
- 
-    def __init__(self):
-        wx.Dialog.__init__(self, None, title="Login", size=(250, 255))
+    def __init__(self, parent, id, title, size=wx.DefaultSize, pos=wx.DefaultPosition, style=wx.DEFAULT_DIALOG_STYLE,):
+        wx.Dialog.__init__(self)
+        # self.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
+        self.Create(parent, id, title, pos, size, style)
+        self.SetIcon(wx.Icon('cherrytree.png'))
+
         self.logged_in = False
-        self.Centre()
+        # self.CentreOnScreen(wx.BOTH)
  
         # user info
         user_sizer = wx.BoxSizer(wx.HORIZONTAL)
  
         user_lbl = wx.StaticText(self, label="Username:")
-        user_sizer.Add(user_lbl, 0, wx.ALL|wx.CENTER, 5)
+        user_sizer.Add(user_lbl, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
         self.user = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
+        user_sizer.Add(self.user, 1, wx.EXPAND| wx.ALIGN_CENTRE|wx.ALL, 5)
         self.user.Bind(wx.EVT_TEXT_ENTER, self.onLogin)
-        user_sizer.Add(self.user, 0, wx.ALL, 5)
- 
+        
         # pass info
         p_sizer = wx.BoxSizer(wx.HORIZONTAL)
  
         p_lbl = wx.StaticText(self, label="Password:")
-        p_sizer.Add(p_lbl, 0, wx.ALL|wx.CENTER, 5)
+        p_sizer.Add(p_lbl, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
         self.password = wx.TextCtrl(self, style=wx.TE_PASSWORD|wx.TE_PROCESS_ENTER)
         self.password.Bind(wx.EVT_TEXT_ENTER, self.onLogin)
-        p_sizer.Add(self.password, 0, wx.ALL, 5)
- 
+        p_sizer.Add(self.password, 1, wx.EXPAND| wx.ALIGN_CENTRE|wx.ALL, 5)
+
+        line = wx.StaticLine(self, -1, size=(20,-1), style=wx.LI_HORIZONTAL)
+         
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        main_sizer.Add(user_sizer, 0, wx.ALL, 5)
-        main_sizer.Add(p_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(user_sizer, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        main_sizer.Add(p_sizer, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        main_sizer.Add(line, 0, wx.GROW|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 10)
  
         btn = wx.Button(self, label="Login")
         btn.Bind(wx.EVT_BUTTON, self.onLogin)
         main_sizer.Add(btn, 0, wx.ALL|wx.CENTER, 5)
  
         self.SetSizer(main_sizer)
+        main_sizer.Fit(self)
  
     def onLogin(self, event=None):
         """
@@ -1754,7 +1761,7 @@ class LoginDialog(wx.Dialog):
         try:
             if Controller.Admin().authenticate(user, password):
                 self.logged_in = True
-                self.Close()
+                self.Destroy()
             else:
                 raise AuthenticationError()
         except Exception as error:
@@ -1765,26 +1772,38 @@ class LoginDialog(wx.Dialog):
 
 
 class NewUserForm(sc.SizedDialog):
-    def __init__(self, parent):
-        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
+    def __init__(self, parent, id):
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX | wx.CENTRE)
 
-        sc.SizedDialog.__init__(self, None, -1, 'New User', size=(250, 300), style=FLAGS)
+        sc.SizedDialog.__init__(self, parent, id, 'New User', size=(270, 270), style=FLAGS)
+        
         cPane = self.GetContentsPane()
         pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
         pane.SetSizerProps(expand=True, proportion=1)
         pane.SetSizerType("vertical")
+        self.SetIcon(wx.Icon('cherrytree.png'))
 
         wx.StaticText(pane, -1, 'Username')
-        self.username = wx.TextCtrl(pane, -1, '', validator=FormValidator(ALPHA_ONLY))
+        self.username = wx.TextCtrl(pane, -1, '')
         self.username.SetSizerProps(expand=True)
         wx.StaticText(pane, -1, 'Password')
-        self.pass_fst = wx.TextCtrl(pane, -1, '', style=wx.TE_PASSWORD, validator=FormValidator(PRINTABLE))
+        self.pass_fst = wx.TextCtrl(pane, -1, '', style=wx.TE_PASSWORD)
         self.pass_fst.SetSizerProps(expand=True)
         wx.StaticText(pane, -1, 'Enter Password Again')
-        self.pass_snd = wx.TextCtrl(pane, -1, '', style=wx.TE_PASSWORD)#, validator=PasswordValidator(PRINTABLE, self.pass_fst))
+        self.pass_snd = wx.TextCtrl(pane, -1, '', style=wx.TE_PASSWORD)
         self.pass_snd.SetSizerProps(expand=True)
 
-        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        # Set validators for the text controls
+        self.username.SetValidator(FormValidator(ALPHA_ONLY))
+        # We need to attach validator to just one password text control 
+        # So we can compare it's contents with the other
+        self.pass_fst.SetValidator(PasswordValidator(PRINTABLE, self.pass_snd))
+        # self.pass_snd.SetValidator(PasswordValidator(PRINTABLE, self.pass_fst))
+
+        # Create buttons for the form 
+        btnsizer = self.CreateButtonSizer(wx.OK | wx.CANCEL | wx.ALIGN_CENTRE_VERTICAL)
+
+        self.SetButtonSizer(btnsizer)
 
 
 class RemoveUserDialog(sc.SizedDialog):
@@ -1821,7 +1840,6 @@ class AppFrame(wx.Frame):
         self.SetMinSize((1200, 700))
 
         self.center_panel = cpl = wx.Panel(pnl)      
-        self.allowAuiFloating = False
 
         self.Bind(wx.EVT_WINDOW_DESTROY, self.closedialogs, self)
         self.Bind(wx.EVT_CONTEXT_MENU, self.OnSettings)
@@ -1910,44 +1928,61 @@ class AppFrame(wx.Frame):
         # Use the aui manager to set up everything
         self.mgr.AddPane(cpl, agw.AuiPaneInfo().CenterPane().MinSize((685, -1)).Name('bookPane').CloseButton(False))
         self.mgr.AddPane(rpnl, agw.AuiPaneInfo().Right().Layer(2).BestSize((240, -1)).MinSize((240, -1)).
-                Floatable(self.allowAuiFloating).FloatingSize((240, 700)).Caption('Search').CloseButton(False)
+                Floatable(False).FloatingSize((240, 700)).Caption('Search').CloseButton(False)
                 .Name('AdminPane').Fixed())
 
         self.mgr.SetArtProvider(agw.ModernDockArt(self))
-        self.mgr.SavePerspective()
+        # self.mgr.SavePerspective()
         self.Centre(wx.BOTH)
         self.mgr.Update()
 
         # If no user accounts exist then create one
-        self.users = Controller.Admin().get_count()
-        # if self.users == 0: 
-            
-        #     if self.OnCreateUser(): self.Show()
-        #     else: self.Close()
-            
-        # elif self.users >= 1:
-            
-        #     dlg = LoginDialog()
-        #     dlg.ShowModal()
-        #     authenticated = dlg.logged_in
-
-        #     if authenticated:
-        #         self.Show(True)                    
-            
-        #     else:
-        #         dlg.Destroy()
-        #         self.Close()
-        #         SystemExit()
+        self.OnLogin()
         
-        # else: pass
+    def OnLogin(self):
+        """ Login page for users
+        """
+        self.users = Controller.Admin().get_count()
+        if self.users == 0: 
+            
+            if self.OnCreateUser():
+                self.users = 1
 
-        self.Show()
+                dlg = LoginDialog(self, -1, 'Login')
+                dlg.CentreOnScreen(wx.BOTH)
+                dlg.ShowModal()
+
+                if dlg.logged_in:
+                    self.Show()               
+                else:
+                    dlg.Destroy()
+                    self.Close()
+                    SystemExit()
+                
+            else: 
+                self.Close()
+            
+        elif self.users >= 1:
+            
+            dlg = LoginDialog(self, -1, 'Login')
+            dlg.CentreOnScreen(wx.BOTH)
+            dlg.ShowModal()
+
+            if dlg.logged_in:
+                self.Show()               
+            else:
+                dlg.Destroy()
+                self.Close()
+                SystemExit()
+        
+        else: pass
 
     def OnLogout(self, event):
 
         if wx.MessageBox(message='Are you sure you want to log out?', caption='Log Out', style=wx.YES_NO|wx.CENTER) == wx.YES:
             self.Hide()
-            dlg = LoginDialog()
+            dlg = LoginDialog(self, -1, 'Login')
+            dlg.CentreOnScreen(wx.BOTH)
             dlg.ShowModal()
             authenticated = dlg.logged_in
             if authenticated: self.Show(True)
@@ -2019,39 +2054,40 @@ class AppFrame(wx.Frame):
         menu.Destroy()
     
     def OnCreateUser(self, event=None):
-        with NewUserForm(self) as dlg: 
+        with NewUserForm(self, -1) as dlg: 
             dlg.CenterOnScreen()
             if dlg.ShowModal() == wx.ID_OK:
                 try: 
                     user_info = self.fetch_user_form(dlg)
-                    self.saveUser(user_info)
-                except Exception as error: raise error
+                    
+                    uname, passw = user_info
+                    Controller.Admin().add_user(uname, passw)
+
+                    notify = adv.NotificationMessage(
+                        title="User Account Creation",
+                        message="User account created successfully",
+                        parent=self, flags=wx.ICON_INFORMATION)
+                    notify.Show(timeout=20)
+                    return True
+
+                except Exception as error: 
+                    notify = adv.NotificationMessage(
+                        title="User Account Creation",
+                        message="User account creation unsuccessful",
+                        parent=self, flags=wx.ICON_INFORMATION)
+                    notify.Show(timeout=20)
+                    return False
             else: 
                 dlg.Destroy() # if creating a new user is cancelled then close dialog
-    
+
+        
+        
+
     def fetch_user_form(self, userform):
         uname = userform.username.GetValue()
         passw = userform.pass_snd.GetValue()
         user = (uname, passw)
         return user
-
-    def saveUser(self, user):
-        try:
-            uname, passw = user
-            Controller.Admin().add_user(uname, passw)
-            
-            notify = adv.NotificationMessage(
-                title="User Account Creation",
-                message="New user created successfully",
-                parent=None, flags=wx.ICON_INFORMATION)
-            notify.Show(timeout=20)
-        
-        except Exception as error:
-            notify = adv.NotificationMessage(
-                title="User Account Creation",
-                message="User account creation unsuccessful",
-                parent=None, flags=wx.ICON_ERROR)
-            notify.Show(timeout=20)
 
     def OnRemoveUser(self, event):
         print('This also works')
@@ -2215,8 +2251,8 @@ class AppObject(wx.App):
         self.SetAppName("Cranberry")
 
         # App initialization screen
-        CranberryInitScreen()
-        # frame = AppFrame(None, title='Cranberry')
+        # CranberryInitScreen()
+        frame = AppFrame(None, title='Cranberry')
         return True
 
 
