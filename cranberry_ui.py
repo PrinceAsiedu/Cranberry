@@ -288,7 +288,7 @@ class HomePanel(wx.Panel):
 
          # Courses heading 
         cse_head_box = wx.BoxSizer(wx.HORIZONTAL)
-        cse_txt = wx.StaticText(self, -1, 'Subject')
+        cse_txt = wx.StaticText(self, -1, 'Courses')
         cse_txt.SetFont(FONT)
         cse_txt.SetForegroundColour('grey35')
         cse_head_box.Add(cse_txt, 1, wx.ALL, 2)
@@ -348,7 +348,7 @@ class HomePanel(wx.Panel):
         first_horz_box.Add(stu_box, 1, wx.LEFT, 40)
         first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
         first_horz_box.Add(stf_box, 1, wx.LEFT, 20)
-        first_horz_box.Add(wx.StaticLine(self, -1,  style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
+        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
         first_horz_box.Add(cse_box, 1, wx.LEFT, 20)  
         first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)      
         first_horz_box.Add(itm_box, 1, wx.LEFT, 20)
