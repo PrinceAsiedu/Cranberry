@@ -280,9 +280,9 @@ class Admin(model.Access_Session):
 		except Exception as error: raise error
 		return user
 	
-	def edit_user(self, username, password):
+	def edit_user(self, username, new_uname, password):
 		password = hash_password(password)
-		try: self.update_user(username, password)
+		try: self.update_user(username, new_uname, password)
 		except Exception as error: raise error
 
 	def delete_user(self, username):

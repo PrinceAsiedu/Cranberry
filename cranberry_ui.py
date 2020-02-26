@@ -1769,10 +1769,10 @@ class LoginDialog(wx.Dialog):
 
 class NewUserForm(sc.SizedDialog):
     def __init__(self, parent, id):
-        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX | wx.CENTRE)
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX )
 
         sc.SizedDialog.__init__(self, parent, id, 'New User', size=(270, 270), style=FLAGS)
-        
+        self.CenterOnScreen(wx.BOTH)
         cPane = self.GetContentsPane()
         pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
         pane.SetSizerProps(expand=True, proportion=1)
@@ -1785,7 +1785,7 @@ class NewUserForm(sc.SizedDialog):
         wx.StaticText(pane, -1, 'Password')
         self.pass_fst = wx.TextCtrl(pane, -1, '', style=wx.TE_PASSWORD)
         self.pass_fst.SetSizerProps(expand=True)
-        wx.StaticText(pane, -1, 'Enter Password Again')
+        wx.StaticText(pane, -1, 'Repeat Password')
         self.pass_snd = wx.TextCtrl(pane, -1, '', style=wx.TE_PASSWORD)
         self.pass_snd.SetSizerProps(expand=True)
 
@@ -1795,20 +1795,40 @@ class NewUserForm(sc.SizedDialog):
         # We need to attach validator to just one password text control 
         # So we can compare it's contents with the other
         self.pass_fst.SetValidator(PasswordValidator(PRINTABLE, self.pass_snd))
-        # self.pass_snd.SetValidator(PasswordValidator(PRINTABLE, self.pass_fst))
 
         # Create buttons for the form 
-        btnsizer = self.CreateButtonSizer(wx.OK | wx.CANCEL | wx.ALIGN_CENTRE_VERTICAL)
+        btnsizer = self.CreateButtonSizer(wx.OK | wx.CANCEL | wx.ALIGN_CENTRE_HORIZONTAL)
 
         self.SetButtonSizer(btnsizer)
 
 
-class RemoveUserDialog(sc.SizedDialog):
-    pass
+class EditUser(sc.SizedDialog):
+    def __init__(self, parent, id):
+        FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX | wx.CENTRE)
+        sc.SizedDialog.__init__(self, parent, id, 'Edit User', size=(300, 250), style=FLAGS)
+        self.SetIcon(wx.Icon(APP_ICON))
+        self.CenterOnParent(wx.BOTH)
 
+        cPane = self.GetContentsPane()
+        pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
+        pane.SetSizerProps(expand=True, proportion=1)
+        pane.SetSizerType("form")
 
-class EditUserDialog(sc.SizedDialog):
-    pass
+        wx.StaticText(pane, -1, 'Username')
+        self.uname = wx.TextCtrl(pane, -1, '', validator=TextCtrlValidator(ALPHA_ONLY))
+
+        wx.StaticText(pane, -1, 'New username')
+        self.nuname = wx.TextCtrl(pane, -1, '', validator=TextCtrlValidator(ALPHA_ONLY))
+
+        wx.StaticText(pane, -1, 'New Password')
+        self.passw = wx.TextCtrl(pane, -1, '')
+
+        wx.StaticText(pane, -1, 'Repeat New Password')
+        self.passw1 = wx.TextCtrl(pane, -1, '')
+
+        self.passw.SetValidator(validator=PasswordValidator(PRINTABLE, self.passw1))
+
+        self.SetButtonSizer(self.CreateButtonSizer(wx.OK|wx.CANCEL|wx.ALIGN_CENTER_HORIZONTAL))
 
 
 class SearchResultPanel(wx.Panel):
@@ -1818,9 +1838,8 @@ class SearchResultPanel(wx.Panel):
 class AppFrame(wx.Frame):
 
     def __init__(self, parent, title=''):
-        FLAGS = (wx.FULL_REPAINT_ON_RESIZE |wx.MINIMIZE_BOX | wx.SYSTEM_MENU | 
-                wx.CAPTION | wx.CLOSE_BOX | wx.FRAME_SHAPED)
-        super(AppFrame, self).__init__(parent=parent, title=title, style=FLAGS)
+        FLAGS = (wx.FULL_REPAINT_ON_RESIZE |wx.MINIMIZE_BOX | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX | wx.FRAME_SHAPED)
+        super(AppFrame, self).__init__(parent=parent, title=title,  style=FLAGS)
         
         # Set an application icon
         self.SetIcon(wx.Icon(APP_ICON))
@@ -1855,13 +1874,12 @@ class AppFrame(wx.Frame):
         
         toolbar.AddTool(60, 'Email', wx.Bitmap('envelopeout.png'), shortHelp='Send a mail.')
         toolbar.AddTool(50, 'SMS', wx.Bitmap('chatout.png'), shortHelp='Send a text message.')
-        toolbar.AddTool(70, 'Reports', wx.Bitmap('cvout.png'), shortHelp='Generate Student Reports')
+        # toolbar.AddTool(70, 'Reports', wx.Bitmap('cvout.png'), shortHelp='Generate Student Reports')
         toolbar.AddTool(30, 'Settings', wx.Bitmap('usersetout.png'), shortHelp='Edit user related info')
         toolbar.AddTool(90, 'Log Out', wx.Bitmap('exitout.png'), shortHelp='Sign out of Cranberry')
         toolbar.AddTool(80, 'Info', wx.Bitmap('help.png'), shortHelp='Program Information')
        
         toolbar.SetToolBitmapSize(icon_size)
-
         toolbar.Realize()
 
         # Bind some event handlers to toolbar
@@ -1872,8 +1890,9 @@ class AppFrame(wx.Frame):
         self.Bind(wx.EVT_TOOL, self.OnLogout, id=90)
         #self.Bind(wx.EVT_TOOL, func, id=70)
 
-        tab_style = (wx.lib.agw.aui.auibook.AUI_NB_SMART_TABS | wx.lib.agw.aui.auibook.AUI_NB_NO_TAB_FOCUS|
-         wx.lib.agw.aui.auibook.AUI_NB_TAB_FIXED_WIDTH)
+        tab_style = (wx.lib.agw.aui.auibook.AUI_NB_SMART_TABS 
+                    | wx.lib.agw.aui.auibook.AUI_NB_NO_TAB_FOCUS
+                    |wx.lib.agw.aui.auibook.AUI_NB_TAB_FIXED_WIDTH)
 
         self.nb = nb = agw.auibook.AuiNotebook(cpl, agwStyle=tab_style)
         # nb.SetArtProvider(agw.AuiDefaultTabArt())
@@ -1920,18 +1939,32 @@ class AppFrame(wx.Frame):
 
         rbox = wx.BoxSizer(wx.VERTICAL)
         rbox.Add(sbox, 0, wx.EXPAND | wx.ALL, 5)
-        rbox.Add(wx.StaticText(rpnl, label='Event Calendar'), 0, wx.TOP | wx.LEFT, 5)
+        rbox.Add(wx.StaticText(rpnl, label='Calendar'), 0, wx.TOP | wx.LEFT, 5)
         rbox.Add(cal, 0, wx.EXPAND | wx.ALL, 5)
         rpnl.SetSizer(rbox)
 
         # Use the aui manager to set up everything
-        self.mgr.AddPane(cpl, agw.AuiPaneInfo().CenterPane().MinSize((685, -1)).Name('bookPane').CloseButton(False))
-        self.mgr.AddPane(rpnl, agw.AuiPaneInfo().Right().Layer(2).BestSize((240, -1)).MinSize((240, -1)).
-                Floatable(False).FloatingSize((240, 700)).Caption('Search').CloseButton(False)
-                .Name('AdminPane').Fixed())
+        self.mgr.AddPane(cpl, agw.AuiPaneInfo().
+                                CenterPane().
+                                MinSize((685, -1)).
+                                Floatable(False).
+                                Name('bookPane').
+                                CloseButton(False)
+                        )
 
-        self.mgr.SetArtProvider(agw.ModernDockArt(self))
-        # self.mgr.SavePerspective()
+        self.mgr.AddPane(rpnl, agw.AuiPaneInfo().
+                                Right().Layer(2).
+                                BestSize((240, -1)).
+                                MinSize((240, -1)).
+                                Floatable(False).
+                                FloatingSize((240, 700)).
+                                Caption('Search').
+                                CloseButton(False).
+                                Name('AdminPane').
+                                Fixed()
+                        )
+
+        # self.mgr.SetArtProvider(agw.ModernDockArt(self))
         self.Centre(wx.BOTH)
         self.mgr.Update()
 
@@ -2057,7 +2090,6 @@ class AppFrame(wx.Frame):
     
     def OnCreateUser(self, event=None):
         with NewUserForm(self, -1) as dlg: 
-            dlg.CenterOnScreen()
             if dlg.ShowModal() == wx.ID_OK:
                 try: 
                     user_info = self.fetch_user_form(dlg)
@@ -2129,8 +2161,40 @@ class AppFrame(wx.Frame):
                     parent=None, flags=wx.ICON_ERROR)
                 notify.Show(timeout=40)
         
-    def OnEditUser(self, event):
-        pass
+    def OnEditUser(self, event):        
+        with EditUser(self, -1) as dlg:
+            if dlg.ShowModal() == wx.ID_OK:
+                try:
+                    user = self.fetch_edit_form(dlg)
+                    username, new_username, new_password = user
+                    Controller.Admin().edit_user(username, new_username, new_password)
+
+                    notify = adv.NotificationMessage(
+                        title="User Account Update",
+                        message="User account updated successfully",
+                        parent=self, flags=wx.ICON_INFORMATION)
+                    notify.Show(timeout=20)
+
+                except Exception as error: 
+                    notify = adv.NotificationMessage(
+                        title="User Account Update",
+                        message="User account update unsuccessful",
+                        parent=self, flags=wx.ICON_INFORMATION)
+                    notify.Show(timeout=20)
+            else:
+                dlg.Destroy()
+
+
+        # self.eu_frame.Bind(wx.EVT_TEXT_ENTER, self.edit_user, self.passw)
+        # self.eu_frame.Bind(wx.EVT_BUTTON, self.edit_user, btn)
+    
+    def fetch_edit_form(self, edit_form):
+        username = edit_form.uname.GetValue()
+        new_name = edit_form.nuname.GetValue()
+        new_pass = edit_form.passw.GetValue()
+        
+        user = (username, new_name, new_pass)
+        return user
 
     def OnSms(self, event):
       with SmsPad(self) as form_dlg:  # Form dialog as a context manager

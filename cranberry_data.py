@@ -78,10 +78,10 @@ class Access_Session:
 			msg = 'User not found - {}'.format(username)
 			raise UserNotFound(msg)
 
-	def update_user(self, username, passw):
+	def update_user(self, username, new_uname, passw):
 		try:
 			user = self.get_user(username)
-			if username: user.aname = username
+			if new_uname: user.aname = new_uname
 			if passw: user.passw = passw
 			self.session.commit()
 		
