@@ -264,6 +264,11 @@ class Inventory():
 		return total
 
 
+class Fees():
+
+	def __init__(self):pass
+
+
 class Admin(model.Access_Session):
 
 	def __init__(self):

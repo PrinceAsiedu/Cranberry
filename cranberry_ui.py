@@ -288,7 +288,7 @@ class HomePanel(wx.Panel):
 
          # Courses heading 
         cse_head_box = wx.BoxSizer(wx.HORIZONTAL)
-        cse_txt = wx.StaticText(self, -1, 'Courses')
+        cse_txt = wx.StaticText(self, -1, 'Subjects')
         cse_txt.SetFont(FONT)
         cse_txt.SetForegroundColour('grey35')
         cse_head_box.Add(cse_txt, 1, wx.ALL, 2)
@@ -1252,9 +1252,251 @@ class FeePanel(wx.Panel):
         super(FeePanel, self).__init__(parent=parent, id=wx.ID_ANY)
 
         self.home = home
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.dvlc = dv.DataViewListCtrl(self, style=wx.BORDER_THEME
+                                                    | dv.DV_ROW_LINES  # nice alternating bg colors
+                                                    | dv.DV_VERT_RULES
+                                                    | dv.DV_HORIZ_RULES
+                                                    | dv.DV_MULTIPLE)
+
+        columns = [('Item ID', -1), ('Name', 120), ('Description', 270),
+                   ('Quantity', -1), ('State', -1), ('Cost', -1), 
+                   ('Discount', -1), ('Totalcost', 110), ('Date of Purchase', 110)
+                ]
+
+        for column in columns:
+            self.dvlc.AppendTextColumn(column[0], width=column[1], mode=dv.DATAVIEW_CELL_EDITABLE)
+        
+        items = Controller.Inventory()
+        self.items = items.all_items()
+        
+        for item in self.items:
+            item.date_bought = datetime.strftime(item.date_bought, '%x')
+            stud = [item.pid, item.name, item.description, item.quantity, 
+                    item.state, item.cost_per_item, item.discount, item.totalcost, item.date_bought]
+
+            self.dvlc.AppendItem(stud)
+        
+        btnbox = wx.BoxSizer(wx.HORIZONTAL)
+        # colour for platebuttons 
+        col = wx.Colour('dodgerblue')
+        # new item button
+        new_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('add1.png'), label='New')
+        new_item.SetFont(btnFont)
+        new_item.SetPressColor(col)
+        self.Bind(wx.EVT_BUTTON, self.OnNewItem, new_item)
+
+        # remove item button
+        remove_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Remove')
+        remove_item.SetFont(btnFont)
+        remove_item.SetPressColor(col)
+        self.Bind(wx.EVT_BUTTON, self.OnRemoveItem, remove_item)
+
+        # save changes made to item info button
+        save_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit')
+        save_item.SetFont(btnFont)
+        save_item.SetPressColor(col)
+        self.Bind(wx.EVT_BUTTON, self.OnEditItem, save_item)
+
+        # button list
+        btnlist = [new_item, remove_item, save_item]
+
+        for button in btnlist:
+            btnbox.Add(button)
+
+        self.main_sizer.Add(self.dvlc, 1, wx.EXPAND)
+        self.main_sizer.Add(btnbox)
         self.SetSizer(self.main_sizer)
+
+    def OnNewItem(self, event):
+        with ItemForm(self, 'New Item') as form_dlg:
+            form_dlg.CenterOnScreen()
+            if form_dlg.ShowModal() == wx.ID_OK:
+                form_info = self.GetFormData(form_dlg)
+                self.SaveItem(form_info)
+            else:
+                form_dlg.Destroy()
+
+    def GetFormData(self, dialog):
+
+        name = dialog.name.GetValue()
+        description = dialog.description.GetValue()
+        quantity = dialog.quantity.GetValue()
+        state = dialog.state.GetSelection()
+        state = dialog.state.GetString(state)
+        cost = dialog.cost.GetValue()
+    
+        discount = dialog.discount.GetValue()
+        date = dialog.date.GetValue()
+
+        if quantity == 0 or quantity == None:
+            quantity = 1
+        
+        if cost == 0 or cost == None:
+            cost == None
+        
+        if discount == 0 or discount == None:
+            discount = None 
+
+        item_data = [name, description, quantity, state, cost, discount, date]
+
+        return item_data
+
+    def SaveItem(self, item_data):
+
+        try:
+            name, description, quantity, state, cost, discount, date = item_data
+            total = (int(cost) * int(quantity)) - int(discount)
+
+            item = Controller.Inventory(name=name, desc=description, 
+                qty=quantity, state=state, cost=cost, 
+                discount=discount,total=total, date=date)
+            item.add_item()
+
+            self.append_item()
+            item_total = str(Controller.Inventory().item_total())
+            self.home.itm_stat.SetLabel(item_total)
+
+            notify = adv.NotificationMessage(
+                title="Inventory Update Successful",
+                message="%s successfully added to\n your inventory!" % str(name),
+                parent=None, flags=wx.ICON_INFORMATION)
+            notify.Show(timeout=20)
+        
+        except Exception as error:
+
+            notify = adv.NotificationMessage(
+                title="Inventory Update Unsuccessful",
+                message="%s could not be added to your inventory!\n%s " % (str(name), str(error)),
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=20)
+
+    def append_item(self):
+        item = Controller.Inventory().fetch_new_item()
+        item.date_bought = datetime.strftime(item.date_bought, '%x')
+        item_data = [item.pid, item.name, item.description, 
+                     item.quantity, item.state, item.cost_per_item, 
+                     item.discount, item.totalcost
+                    ]
+
+        self.dvlc.AppendItem(item_data)
+
+    def OnRemoveItem(self, event):
+        try:
+            if wx.MessageBox('Are you sure you want to continue', 'Delete Item?', style=wx.YES_NO) == wx.YES:
+
+                row = self.dvlc.GetSelectedRow()
+                pid = self.dvlc.GetValue(row, 0)
+                item = str(self.dvlc.GetValue(row, 1))
+                Controller.Inventory().delete_item(pid)
+                self.dvlc.DeleteItem(row)
+                
+                item_total = str(Controller.Inventory().item_total())
+                self.home.itm_stat.SetLabel(item_total)
+
+                notify = adv.NotificationMessage(
+                    title="Course Information Update",
+                    message="%s has been removed from the database!" % item,
+                    parent=None, flags=wx.ICON_INFORMATION)
+                notify.Show(timeout=20)
+            
+            else:pass
+
+        except Exception as error:
+            notify = adv.NotificationMessage(
+                title="Inventory Information Update",
+                message="Error removing item!",
+                parent=None, flags=wx.ICON_ERROR)
+            notify.Show(timeout=20)
+
+    def OnEditItem(self, event):
+        
+        rows = self.dvlc.GetItemCount()
+        for row in range(rows):
+            if self.dvlc.IsRowSelected(row):
+                pid = self.dvlc.GetValue(row, 0)
+                item = Controller.Inventory().fetch_item(pid)
+                with ItemForm(self, 'Item Data Modification') as form_dlg:
+                   
+                    form_dlg.name.SetValue(item.name)
+                    form_dlg.description.SetValue(item.description)
+                    form_dlg.quantity.SetValue(str(item.quantity))
+                    form_dlg.cost.SetValue(str(item.cost_per_item))
+                    form_dlg.discount.SetValue(str(item.discount))
+
+                    form_dlg.CenterOnScreen()
+
+                    if form_dlg.ShowModal() == wx.ID_OK:
+                        try:
+                            form_info = self.GetFormData(form_dlg)
+
+                            name, description, quantity, state, cost, discount, p_date = form_info
+                            total = (int(cost) * int(quantity)) - int(discount)
+
+                            if not p_date.IsValid():
+                                p_date = ''
+
+                            item = Controller.Inventory(name, description, quantity, state, cost, total, discount, p_date)
+                            item.edit_item(pid) # edited item
+                            
+                            self.dvlc.DeleteAllItems()
+
+                            items = Controller.Inventory()
+                            items = items.all_items()
+                            
+                            for item in items:
+                                
+                                stud = [item.pid, item.name, item.description, item.quantity, 
+                                        item.state, item.cost_per_item, item.discount, item.totalcost, item.date_bought]
+
+                                self.dvlc.AppendItem(stud)
+
+                            notify = adv.NotificationMessage(
+                                title="Item Information Update",
+                                message="Changes committed successfully!",
+                                parent=None, flags=wx.ICON_INFORMATION)
+                            notify.Show(timeout=20)
+                        
+                        except Exception as error:
+                            notify = adv.NotificationMessage(
+                                title="Item Information Update",
+                                message="Error making changes to item info!",
+                                parent=None, flags=wx.ICON_ERROR)
+                            notify.Show(timeout=20)
+                            raise error
+                        
+                    else:
+                        form_dlg.Destroy()
+
+    def OnContextMenu(self, event): 
+        if not hasattr(self, 'new_id'):
+            self.new_id = wx.NewIdRef()
+            self.edit_id = wx.NewIdRef()
+            self.remove_id = wx.NewIdRef()     
+            self.Bind(wx.EVT_MENU, self.OnNewItem, id=self.new_id) 
+            self.Bind(wx.EVT_MENU, self.OnRemoveItem, id=self.remove_id)
+            self.Bind(wx.EVT_MENU, self.OnEditItem, id=self.edit_id)
+
+        menu = wx.Menu()
+
+        new_itm = wx.MenuItem(menu, self.new_id, 'New Student')
+        new_itm.SetBitmap(wx.Bitmap('add1.png'))
+
+        del_itm = wx.MenuItem(menu, self.remove_id, 'Remove Student')
+        del_itm.SetBitmap(wx.Bitmap('trashout.png'))
+
+        edit_itm = wx.MenuItem(menu,self.edit_id, 'Edit Student Information')
+        edit_itm.SetBitmap(wx.Bitmap('push1.png'))
+
+        menu.Append(new_itm)
+        menu.Append(del_itm)
+        menu.Append(edit_itm)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
+
 
 
 class ItemForm(sc.SizedDialog):
@@ -1905,7 +2147,7 @@ class AppFrame(wx.Frame):
                 (self.home, "Home", wx.Bitmap('homeout.png')),
                 (StaffPanel(nb, self.home), "Staff", wx.Bitmap('teacherout.png')),
                 (StudentPanel(nb, self.home), "Student", wx.Bitmap('studentsout.png')),
-                (CoursePanel(nb, self.home), "Courses", wx.Bitmap('courseout.png')),
+                (CoursePanel(nb, self.home), "Subjects", wx.Bitmap('courseout.png')),
                 # (AttendancePanel(nb, self.home), "Attendance", wx.Bitmap('attendanceout.png')),
                 (FeePanel(nb, self.home), "Fees", wx.Bitmap('feesout.png')),
                 (InventoryPanel(nb, self.home), "Inventory", wx.Bitmap('itemsout.png'))#,
