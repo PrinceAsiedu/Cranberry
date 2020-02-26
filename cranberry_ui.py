@@ -1,4 +1,4 @@
-# cranberry_ui.py
+
 
 # -----------
 # to-do list  
@@ -16,29 +16,30 @@
 # TODO: Create printing system
 # TODO: Create a financial plotting system
 
-__version__     = "1.2"
+Project         = 'cranberry_ui.py'
+__version__     = "1.3"
 __date__        = "February, 2020"
 __author__      = "Prince Oforh Asiedu"
 __email__       = "prince14asiedu@gmail.com"
 __copyright__   = "(c) Prince Oforh Asiedu 2020"
 
-
+# imports from Python's standard library
 import time
 import string
 from datetime import datetime
 
+# imports from the wxPython library for the GUI
 import wx
 import wx.adv as adv
 import wx.dataview as dv
 import wx.lib.agw.aui as agw
 import wx.lib.sized_controls as sc
-from wx.adv import SplashScreen, TaskBarIcon
 from wx.lib import colourdb as cdb
-from wx.lib.filebrowsebutton import FileBrowseButton as fbtn
-from wx.lib.platebtn import PlateButton as pbtn
 from wx.lib.wordwrap import wordwrap
+from wx.lib.platebtn import PlateButton as pbtn
+from wx.lib.filebrowsebutton import FileBrowseButton as fbtn
 
-from logger import Logger
+# Helper modules i conjured ('Oh fluffy!!!')
 import cranberry_logic as Controller
 from cranerror import AuthenticationError, UserNotFound
 
@@ -47,27 +48,24 @@ ALPHA_ONLY = 2
 DIGIT_ONLY = 3
 PRINTABLE  = 4
 
+APP_ICON = 'cherrytree.png'
 
-class FormValidator(wx.Validator):
-    """ This validator is used to ensure that the user has entered something
-        into the text object editor dialog's text field.
+class TextCtrlValidator(wx.Validator):
+    """ This validator is used to ensure that the user has entered 
+        something into text fields in dialog boxex.
     """
     def __init__(self, flag=None, pyVar=None):
-        """ Standard constructor.
-        """
         wx.Validator.__init__(self)
         self.flag = flag
         self.Bind(wx.EVT_CHAR, self.OnChar)
 
     def Clone(self):
-        """ Standard cloner.
-
-            Note that every validator must implement the Clone() method.
+        """ Note that every validator must implement the Clone() method.
         """
-        return FormValidator(self.flag)
+        return TextCtrlValidator(self.flag)
 
     def Validate(self, win):
-        """ Validate the contents of the given text control.
+        """ Compares the contents of a given text control with another.
         """
         textCtrl = self.GetWindow()
         text = textCtrl.GetValue()
@@ -290,7 +288,7 @@ class HomePanel(wx.Panel):
 
          # Courses heading 
         cse_head_box = wx.BoxSizer(wx.HORIZONTAL)
-        cse_txt = wx.StaticText(self, -1, 'Courses')
+        cse_txt = wx.StaticText(self, -1, 'Subject')
         cse_txt.SetFont(FONT)
         cse_txt.SetForegroundColour('grey35')
         cse_head_box.Add(cse_txt, 1, wx.ALL, 2)
@@ -350,7 +348,7 @@ class HomePanel(wx.Panel):
         first_horz_box.Add(stu_box, 1, wx.LEFT, 40)
         first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
         first_horz_box.Add(stf_box, 1, wx.LEFT, 20)
-        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
+        first_horz_box.Add(wx.StaticLine(self, -1,  style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
         first_horz_box.Add(cse_box, 1, wx.LEFT, 20)  
         first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)      
         first_horz_box.Add(itm_box, 1, wx.LEFT, 20)
@@ -383,28 +381,28 @@ class StaffForm(sc.SizedDialog):
         pane.SetSizerType("vertical")
 
         fn_lbl = wx.StaticText(pane, -1, "Firstname", wx.DefaultPosition, wx.DefaultSize)
-        self.fname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(ALPHA_ONLY))
+        self.fname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = TextCtrlValidator(ALPHA_ONLY))
 
         ln_lbl = wx.StaticText(pane, -1, "Lastame", wx.DefaultPosition, wx.DefaultSize)
-        self.lname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(ALPHA_ONLY))
+        self.lname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = TextCtrlValidator(ALPHA_ONLY))
 
         sex_lbl = wx.StaticText(pane, -1, "Gender", wx.DefaultPosition, wx.DefaultSize)
         self.gender = wx.Choice(pane, -1, choices=["Male", "Female"])
 
         num_lbl = wx.StaticText(pane, -1, "Phone", wx.DefaultPosition, wx.DefaultSize)
-        self.phone = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(DIGIT_ONLY))
+        self.phone = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = TextCtrlValidator(DIGIT_ONLY))
 
         eml_lbl = wx.StaticText(pane, -1, 'Email', wx.DefaultPosition, wx.DefaultSize)
-        self.email = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(ALPHA_NUM))
+        self.email = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = TextCtrlValidator(ALPHA_NUM))
 
         addr_lbl = wx.StaticText(pane, -1, "Address", wx.DefaultPosition, wx.DefaultSize)
-        self.address = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(PRINTABLE))
+        self.address = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = TextCtrlValidator(PRINTABLE))
 
         cat_lbl = wx.StaticText(pane, -1, 'Category', wx.DefaultPosition, wx.DefaultSize)
         self.category = wx.Choice(pane, -1, choices=['Administrator', 'Teacher', 'Other'])
 
         spt_lbl = wx.StaticText(pane, -1, 'Specialty', wx.DefaultPosition, wx.DefaultSize)
-        self.specialty = wx.TextCtrl(pane, -1, size=(150, -1), validator = FormValidator(PRINTABLE))
+        self.specialty = wx.TextCtrl(pane, -1, size=(150, -1), validator = TextCtrlValidator(PRINTABLE))
 
         self.hd_lbl = wx.StaticText(pane, -1, 'Date Of Hiring', wx.DefaultPosition, wx.DefaultSize)
         self.hire_date = adv.DatePickerCtrl(pane, size=(200, -1), 
@@ -664,10 +662,10 @@ class StudentForm(sc.SizedDialog):
         # -----------------------------------------------------------------------
 
         self.fn_lbl = wx.StaticText(pane, -1, "Firstname", wx.DefaultPosition, wx.DefaultSize)
-        self.fname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(ALPHA_ONLY))
+        self.fname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = TextCtrlValidator(ALPHA_ONLY))
 
         self.ln_lbl = wx.StaticText(pane, -1, "Lastame", wx.DefaultPosition, wx.DefaultSize)
-        self.lname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(ALPHA_ONLY))
+        self.lname = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = TextCtrlValidator(ALPHA_ONLY))
 
         self.dob_lbl = wx.StaticText(pane, -1, "Date of Birth", wx.DefaultPosition, wx.DefaultSize)
         self.dob = adv.DatePickerCtrl(pane, size=(100, -1),
@@ -677,16 +675,16 @@ class StudentForm(sc.SizedDialog):
         self.gender = wx.Choice(pane, -1, choices=["Male", "Female"])
 
         self.addr_lbl = wx.StaticText(pane, -1, "Address", wx.DefaultPosition, wx.DefaultSize)
-        self.address = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(PRINTABLE))
+        self.address = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = TextCtrlValidator(PRINTABLE))
 
         self.num_lbl = wx.StaticText(pane, -1, "Phone", wx.DefaultPosition, wx.DefaultSize)
-        self.phone = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = FormValidator(DIGIT_ONLY))
+        self.phone = wx.TextCtrl(pane, -1, "", size=(150, -1), validator = TextCtrlValidator(DIGIT_ONLY))
 
         self.eml_lbl = wx.StaticText(pane, -1, 'Email', wx.DefaultPosition, wx.DefaultSize)
-        self.email = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(ALPHA_NUM))
+        self.email = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = TextCtrlValidator(ALPHA_NUM))
 
         self.prt_lbl = wx.StaticText(pane, -1, 'Parent Name', wx.DefaultPosition, wx.DefaultSize)
-        self.parent_name = wx.TextCtrl(pane, -1, size=(150, -1), validator = FormValidator(ALPHA_ONLY))
+        self.parent_name = wx.TextCtrl(pane, -1, size=(150, -1), validator = TextCtrlValidator(ALPHA_ONLY))
 
         self.lvl_lbl = wx.StaticText(pane, -1, 'Level', wx.DefaultPosition, wx.DefaultSize)
         self.level = wx.Choice(pane, -1, choices=['JHS', 'SHS', 'Professional'])
@@ -987,19 +985,19 @@ class CourseForm(sc.SizedDialog):
 
 
         nm_lbl = wx.StaticText(pane, -1, "Subject", wx.DefaultPosition, wx.DefaultSize)
-        self.name = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(ALPHA_NUM))
+        self.name = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = TextCtrlValidator(ALPHA_NUM))
 
         teacher = wx.StaticText(pane, -1, 'Name of Teacher', wx.DefaultPosition, wx.DefaultSize)
-        self.teacher = wx.TextCtrl(pane, -1, '', size=(200, -1), validator = FormValidator(ALPHA_ONLY))
+        self.teacher = wx.TextCtrl(pane, -1, '', size=(200, -1), validator = TextCtrlValidator(ALPHA_ONLY))
 
         du_lbl = wx.StaticText(pane, -1, "Duration", wx.DefaultPosition, wx.DefaultSize)
-        self.duration = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(ALPHA_NUM))
+        self.duration = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = TextCtrlValidator(ALPHA_NUM))
 
         lv_lbl = wx.StaticText(pane, -1, "Level", wx.DefaultPosition, wx.DefaultSize)
         self.level = wx.Choice(pane, -1, choices=["JHS","SHS","Professional"], size=(200, -1))
 
         pr_lbl = wx.StaticText(pane, -1, 'Price', wx.DefaultPosition, wx.DefaultSize)
-        self.price = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = FormValidator(DIGIT_ONLY))
+        self.price = wx.TextCtrl(pane, -1, "", size=(200, -1), validator = TextCtrlValidator(DIGIT_ONLY))
 
         st_lbl = wx.StaticText(pane, -1, "Status", wx.DefaultPosition, wx.DefaultSize)
         self.status = wx.Choice(pane, -1, size=(200, -1), choices=['Inactive', 'Active']) 
@@ -1271,22 +1269,22 @@ class ItemForm(sc.SizedDialog):
 
 
         nm_lbl = wx.StaticText(pane, -1, "Name", wx.DefaultPosition, wx.DefaultSize)
-        self.name = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=FormValidator(ALPHA_ONLY))
+        self.name = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=TextCtrlValidator(ALPHA_ONLY))
 
         dt_lbl = wx.StaticText(pane, -1, "Description", wx.DefaultPosition, wx.DefaultSize)
-        self.description = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=FormValidator(ALPHA_NUM))
+        self.description = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=TextCtrlValidator(ALPHA_NUM))
 
         qt_lbl = wx.StaticText(pane, -1, "Quantity", wx.DefaultPosition, wx.DefaultSize)
-        self.quantity = qty = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=FormValidator(DIGIT_ONLY))
+        self.quantity = qty = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=TextCtrlValidator(DIGIT_ONLY))
 
         st_lbl = wx.StaticText(pane, -1, 'State/Condition', wx.DefaultPosition, wx.DefaultSize)
         self.state = wx.Choice(pane, -1, size=(300, -1), choices=['Not Good','Normal','Good', 'Excellent'])
 
         ct_lbl = wx.StaticText(pane, -1, "Cost", wx.DefaultPosition, wx.DefaultSize)
-        self.cost = cs = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=FormValidator(DIGIT_ONLY))
+        self.cost = cs = wx.TextCtrl(pane, -1, "", size=(300, -1), validator=TextCtrlValidator(DIGIT_ONLY))
 
         dc_lbl = wx.StaticText(pane, -1, "Discount(In Money)", wx.DefaultPosition, wx.DefaultSize)
-        self.discount = wx.TextCtrl(pane, -1, '', size=(300, -1), validator=FormValidator(DIGIT_ONLY))
+        self.discount = wx.TextCtrl(pane, -1, '', size=(300, -1), validator=TextCtrlValidator(DIGIT_ONLY))
 
         wx.StaticText(pane, -1, 'Date Purchased')
         self.date = wx.adv.DatePickerCtrl(pane, -1, size=(100, -1),
@@ -1308,6 +1306,7 @@ class InventoryPanel(wx.Panel):
         self.dvlc = dv.DataViewListCtrl(self, style=wx.BORDER_THEME
                                                     | dv.DV_ROW_LINES  # nice alternating bg colors
                                                     | dv.DV_VERT_RULES
+                                                    | dv.DV_HORIZ_RULES
                                                     | dv.DV_MULTIPLE)
 
         columns = [('Item ID', -1), ('Name', 120), ('Description', 270),
@@ -1569,6 +1568,7 @@ class StatBar(wx.StatusBar):
 
         self.SetFieldsCount(2)
         self.SetStatusWidths([-2, 213])
+        
 
         # First field text
         status_text = " Cranberry" 
@@ -1585,22 +1585,22 @@ class StatBar(wx.StatusBar):
         self.SetStatusText(formatted_time, 1)
         
 
-class CranTaskBarIcon(TaskBarIcon):
+class CranTaskBarIcon(adv.TaskBarIcon):
     TBMENU_RESTORE = wx.NewIdRef()
     TBMENU_CLOSE = wx.NewIdRef()
     TBMENU_REMOVE = wx.NewIdRef()
 
     def __init__(self, frame):
-        super(CranTaskBarIcon, self).__init__(wx.adv.TBI_DOCK)
+        super(CranTaskBarIcon, self).__init__(adv.TBI_DOCK)
         self.frame = frame
 
         # Set the task bar image
-        tbi_img = wx.Image('cherrytree.png')
+        tbi_img = wx.Image(APP_ICON)
         icon = self.make_icon(tbi_img)
         self.SetIcon(icon, 'Cranberry')
 
         # bind to some events
-        self.Bind(wx.adv.EVT_TASKBAR_LEFT_DCLICK, self.OnTaskBarActivate)
+        self.Bind(adv.EVT_TASKBAR_LEFT_DCLICK, self.OnTaskBarActivate)
         self.Bind(wx.EVT_MENU, self.OnTaskBarActivate, id=self.TBMENU_RESTORE)
         self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=self.TBMENU_CLOSE)
 
@@ -1673,13 +1673,13 @@ class MailPad(sc.SizedDialog):
     def __init__(self, parent):
         FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
 
-        sc.SizedDialog.__init__(self, None, -1, 'Mail', size=(500, 350), style=FLAGS)
+        sc.SizedDialog.__init__(self, parent, -1, 'Mail', size=(550, 450), style=FLAGS)
         cPane = self.GetContentsPane()
         pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
         pane.SetSizerProps(expand=True, proportion=1)
         pane.SetSizerType("vertical")
 
-        # font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
+        font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
 
         rec_lbl = wx.StaticText(pane, -1, 'Reciepient\' email address')
         # rec_lbl.SetFont(font)
@@ -1687,22 +1687,20 @@ class MailPad(sc.SizedDialog):
         self.receipient = wx.TextCtrl(pane, -1, value="", style=wx.TE_PROCESS_ENTER)
         self.receipient.SetFocus()
         self.receipient.SetSizerProps(expand=True)
-        # self.receipient.SetFont(font)
+        self.receipient.SetFont(font)
 
         sub_lbl = wx.StaticText(pane, -1, 'Subject')
-        # sub_lbl.SetFont(font)
+        sub_lbl.SetFont(font)
 
         self.subject = wx.TextCtrl(pane, -1, value='', style=wx.TE_PROCESS_ENTER)
         self.subject.SetSizerProps(expand=True)
-        # self.subject.SetFont(font)
+        self.subject.SetFont(font)
 
-        bd_lbl = wx.StaticText(pane, -1, 'Message Body')
-        # bd_lbl.SetFont(font)
+        wx.StaticText(pane, -1, 'Message Body')
+
         self.body = wx.TextCtrl(pane, -1, size=(-1,110), style=wx.TE_MULTILINE)
         self.body.SetSizerProps(expand=True)
-        # self.body.SetFont(font)
-
-        self.attach = fbtn(pane, -1, buttonText='Add an Attachment')
+        self.body.SetFont(font)
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
 
@@ -1715,11 +1713,9 @@ class LoginDialog(wx.Dialog):
         wx.Dialog.__init__(self)
         # self.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
         self.Create(parent, id, title, pos, size, style)
-        self.SetIcon(wx.Icon('cherrytree.png'))
+        self.SetIcon(wx.Icon('open.png'))
 
-        self.logged_in = False
-        # self.CentreOnScreen(wx.BOTH)
- 
+        self.logged_in = False 
         # user info
         user_sizer = wx.BoxSizer(wx.HORIZONTAL)
  
@@ -1781,7 +1777,7 @@ class NewUserForm(sc.SizedDialog):
         pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
         pane.SetSizerProps(expand=True, proportion=1)
         pane.SetSizerType("vertical")
-        self.SetIcon(wx.Icon('cherrytree.png'))
+        self.SetIcon(wx.Icon(APP_ICON))
 
         wx.StaticText(pane, -1, 'Username')
         self.username = wx.TextCtrl(pane, -1, '')
@@ -1794,7 +1790,8 @@ class NewUserForm(sc.SizedDialog):
         self.pass_snd.SetSizerProps(expand=True)
 
         # Set validators for the text controls
-        self.username.SetValidator(FormValidator(ALPHA_ONLY))
+        self.username.SetValidator(TextCtrlValidator(ALPHA_ONLY))
+
         # We need to attach validator to just one password text control 
         # So we can compare it's contents with the other
         self.pass_fst.SetValidator(PasswordValidator(PRINTABLE, self.pass_snd))
@@ -1814,6 +1811,10 @@ class EditUserDialog(sc.SizedDialog):
     pass
 
 
+class SearchResultPanel(wx.Panel):
+    pass
+
+
 class AppFrame(wx.Frame):
 
     def __init__(self, parent, title=''):
@@ -1822,7 +1823,7 @@ class AppFrame(wx.Frame):
         super(AppFrame, self).__init__(parent=parent, title=title, style=FLAGS)
         
         # Set an application icon
-        self.SetIcon(wx.Icon('cherrytree.png'))
+        self.SetIcon(wx.Icon(APP_ICON))
         
         # Set the aui frame manager
         self.panel = pnl = MainAppPanel(self)
@@ -1842,9 +1843,8 @@ class AppFrame(wx.Frame):
         self.center_panel = cpl = wx.Panel(pnl)      
 
         self.Bind(wx.EVT_WINDOW_DESTROY, self.closedialogs, self)
-        self.Bind(wx.EVT_CONTEXT_MENU, self.OnSettings)
 
-        self.BuildMenuBar()
+        # self.BuildMenuBar()
 
         toolbar = wx.ToolBar(cpl, style=wx.TB_VERTICAL | wx.TB_NODIVIDER)
         icon_size = (30, 30)
@@ -1858,18 +1858,17 @@ class AppFrame(wx.Frame):
         toolbar.AddTool(70, 'Reports', wx.Bitmap('cvout.png'), shortHelp='Generate Student Reports')
         toolbar.AddTool(30, 'Settings', wx.Bitmap('usersetout.png'), shortHelp='Edit user related info')
         toolbar.AddTool(90, 'Log Out', wx.Bitmap('exitout.png'), shortHelp='Sign out of Cranberry')
-        toolbar.AddTool(80, 'Info', wx.Bitmap('info1.png'), shortHelp='Program Information')
+        toolbar.AddTool(80, 'Info', wx.Bitmap('help.png'), shortHelp='Program Information')
        
         toolbar.SetToolBitmapSize(icon_size)
 
         toolbar.Realize()
 
         # Bind some event handlers to toolbar
-
         self.Bind(wx.EVT_TOOL, self.OnSettings, id=30)
         self.Bind(wx.EVT_TOOL, self.OnSms, id=50)
         self.Bind(wx.EVT_TOOL, self.OnMail, id=60)
-        self.Bind(wx.EVT_TOOL, self.OnAboutApp, id=80)
+        self.Bind(wx.EVT_TOOL, self.OnInfo, id=80)
         self.Bind(wx.EVT_TOOL, self.OnLogout, id=90)
         #self.Bind(wx.EVT_TOOL, func, id=70)
 
@@ -1877,7 +1876,7 @@ class AppFrame(wx.Frame):
          wx.lib.agw.aui.auibook.AUI_NB_TAB_FIXED_WIDTH)
 
         self.nb = nb = agw.auibook.AuiNotebook(cpl, agwStyle=tab_style)
-        nb.SetArtProvider(agw.ChromeTabArt())
+        # nb.SetArtProvider(agw.AuiDefaultTabArt())
 
         self.right_panel = rpnl = wx.Panel(pnl, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
         
@@ -1888,10 +1887,10 @@ class AppFrame(wx.Frame):
                 (StaffPanel(nb, self.home), "Staff", wx.Bitmap('teacherout.png')),
                 (StudentPanel(nb, self.home), "Student", wx.Bitmap('studentsout.png')),
                 (CoursePanel(nb, self.home), "Courses", wx.Bitmap('courseout.png')),
-                (AttendancePanel(nb, self.home), "Attendance", wx.Bitmap('attendanceout.png')),
+                # (AttendancePanel(nb, self.home), "Attendance", wx.Bitmap('attendanceout.png')),
                 (FeePanel(nb, self.home), "Fees", wx.Bitmap('feesout.png')),
-                (InventoryPanel(nb, self.home), "Inventory", wx.Bitmap('itemsout.png')),
-                (ReportPanel(nb, self.home), "Reports", wx.Bitmap('report_cardout.png'))
+                (InventoryPanel(nb, self.home), "Inventory", wx.Bitmap('itemsout.png'))#,
+                # (ReportPanel(nb, self.home), "Reports", wx.Bitmap('report_cardout.png'))
             ]
 
         for page, label, bm in pages: nb.AddPage(page, label, bitmap=bm)
@@ -1943,43 +1942,45 @@ class AppFrame(wx.Frame):
         """ Login page for users
         """
         self.users = Controller.Admin().get_count()
-        if self.users == 0: 
+        # if self.users == 0: 
             
-            if self.OnCreateUser():
-                self.users = 1
+        #     if self.OnCreateUser():
+        #         self.users = 1
 
-                dlg = LoginDialog(self, -1, 'Login')
-                dlg.CentreOnScreen(wx.BOTH)
-                dlg.ShowModal()
+        #         dlg = LoginDialog(self, -1, 'Login')
+        #         dlg.CentreOnScreen(wx.BOTH)
+        #         dlg.ShowModal()
 
-                if dlg.logged_in:
-                    self.Show()               
-                else:
-                    dlg.Destroy()
-                    self.Close()
-                    SystemExit()
+        #         if dlg.logged_in:
+        #             self.Show()               
+        #         else:
+        #             dlg.Destroy()
+        #             self.Close()
+        #             SystemExit()
                 
-            else: 
-                self.Close()
+        #     else: 
+        #         self.Close()
             
-        elif self.users >= 1:
+        # elif self.users >= 1:
             
-            dlg = LoginDialog(self, -1, 'Login')
-            dlg.CentreOnScreen(wx.BOTH)
-            dlg.ShowModal()
+        #     dlg = LoginDialog(self, -1, 'Login')
+        #     dlg.CentreOnScreen(wx.BOTH)
+        #     dlg.ShowModal()
 
-            if dlg.logged_in:
-                self.Show()               
-            else:
-                dlg.Destroy()
-                self.Close()
-                SystemExit()
+        #     if dlg.logged_in:
+        #         self.Show()               
+        #     else:
+        #         dlg.Destroy()
+        #         self.Close()
+        #         SystemExit()
         
-        else: pass
+        # else: pass
+        self.Show()
 
     def OnLogout(self, event):
 
-        if wx.MessageBox(message='Are you sure you want to log out?', caption='Log Out', style=wx.YES_NO|wx.CENTER) == wx.YES:
+        if wx.MessageBox(message='Are you sure you want to log out?', 
+                caption='Log Out', style=wx.YES_NO|wx.CENTER| wx.ICON_QUESTION) == wx.YES:
             self.Hide()
             dlg = LoginDialog(self, -1, 'Login')
             dlg.CentreOnScreen(wx.BOTH)
@@ -2021,6 +2022,7 @@ class AppFrame(wx.Frame):
             print(i.firstname)
     
     def OnSettings(self, event):
+        self.users = Controller.Admin().get_count()
         if not hasattr(self, 'new_id'):
             self.new_id = wx.NewIdRef()
             self.edit_id = wx.NewIdRef()
@@ -2080,9 +2082,6 @@ class AppFrame(wx.Frame):
             else: 
                 dlg.Destroy() # if creating a new user is cancelled then close dialog
 
-        
-        
-
     def fetch_user_form(self, userform):
         uname = userform.username.GetValue()
         passw = userform.pass_snd.GetValue()
@@ -2090,8 +2089,46 @@ class AppFrame(wx.Frame):
         return user
 
     def OnRemoveUser(self, event):
-        print('This also works')
+        self.du_frame = wx.Frame(None, -1, 'Remove User', size=(400,100), style=wx.CENTRE|wx.CAPTION|wx.CLOSE_BOX)
+        self.du_frame.SetIcon(wx.Icon(APP_ICON))
+        self.du_frame.CenterOnParent(wx.BOTH)
+        pnl = wx.Panel(self.du_frame, -1, size=wx.DefaultSize)
+        box = wx.BoxSizer(wx.HORIZONTAL)
+        ulbl = wx.StaticText(pnl, -1, 'Username')
+        self.uname = wx.TextCtrl(pnl, -1, '', validator=TextCtrlValidator(ALPHA_ONLY), style=wx.TE_PROCESS_ENTER)
+        btn = wx.Button(pnl, -1, 'Remove' )
+        box.Add(ulbl, 0, wx.TOP|wx.LEFT|wx.ALIGN_CENTRE_VERTICAL, 10)
+        box.Add(self.uname, 1, wx.TOP|wx.LEFT|wx.ALIGN_CENTRE_VERTICAL, 10)
+        box.Add(btn, 0, wx.TOP|wx.LEFT|wx.RIGHT|wx.ALIGN_CENTRE_VERTICAL, 10)
 
+        pnl.SetSizerAndFit(box)
+        self.du_frame.Show()
+
+        self.du_frame.Bind(wx.EVT_TEXT_ENTER, self.rem_user, self.uname)
+        self.du_frame.Bind(wx.EVT_BUTTON, self.rem_user, btn)
+    
+    def rem_user(self, event):
+        remove = Controller.Admin().delete_user
+        message = 'Are sure you want to delete this user?'
+        if wx.MessageBox(message, 'Delete?', style=wx.YES_NO) == wx.YES:
+            try:
+                username = self.uname.GetValue()
+                remove(username)
+
+                self.du_frame.Destroy()
+                notify = adv.NotificationMessage(
+                title="User Information Update",
+                message="You have deleted %s" % username,
+                parent=None, flags=wx.ICON_INFORMATION)
+                notify.Show(timeout=40)
+
+            except Exception as error:
+                notify = adv.NotificationMessage(
+                    title="User Information Update",
+                    message="User not deleted \n%s" % error,
+                    parent=None, flags=wx.ICON_ERROR)
+                notify.Show(timeout=40)
+        
     def OnEditUser(self, event):
         pass
 
@@ -2115,7 +2152,7 @@ class AppFrame(wx.Frame):
             sender.send_sms(receiver, body)
             notify = adv.NotificationMessage(
                 title="Text Message",
-                message="Text message has been sent to \n%s" % receiver,
+                message="Text message sent to \n%s" % receiver,
                 parent=None, flags=wx.ICON_INFORMATION)
             notify.Show(timeout=40)
 
@@ -2190,10 +2227,36 @@ class AppFrame(wx.Frame):
 
         self.Destroy()
 
+    def OnInfo(self, event):
+        if not hasattr(self, 'help'):
+            self.help_id = wx.NewIdRef()
+            self.about_id = wx.NewIdRef()
+            self.Bind(wx.EVT_MENU, self.OnManual, id=self.help_id)
+            self.Bind(wx.EVT_MENU, self.OnAboutApp, id=self.about_id)
+
+        menu = wx.Menu()
+
+        bgcol = 'grey30'
+        fgcol = 'white'
+
+        menu_items = [
+            [self.help_id, 'Help', 'man.png'],
+            [self.about_id, 'About Cranberry', 'info1.png']
+        ]
+        
+        for item in menu_items:
+            mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
+            mi.SetBitmap(wx.Bitmap(item[2]))
+            mi.SetBackgroundColour(bgcol)
+            mi.SetTextColour(fgcol)
+            menu.Append(mi)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
+
     def OnAboutApp(self, event):
         info = adv.AboutDialogInfo()
-
-        info.Icon = wx.Icon('cherrytree.png')
+        info.Icon = wx.Icon(APP_ICON)
         info.Name = 'Cranberry SMS'
         info.Version = __version__
         info.Description = wordwrap(
@@ -2207,12 +2270,15 @@ class AppFrame(wx.Frame):
         info.SetDevelopers([__author__])
 
         adv.AboutBox(info)
+    
+    def OnManual(self, event):
+        print('Hi there')
 
 
-class CranberryInitScreen(SplashScreen):
+class CranberryInitScreen(adv.SplashScreen):
     def __init__(self):
         bmp = wx.Bitmap('cr3.png')
-        SplashScreen.__init__(self, bmp, wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT, 5000, None, -1)
+        adv.SplashScreen.__init__(self, bmp, adv.SPLASH_CENTRE_ON_SCREEN | adv.SPLASH_TIMEOUT, 5000, None, -1)
         self._msg = wx.StaticText(self)
         self.CreateStatusBar()
         sbarHeight = self.StatusBar.Size.height
@@ -2243,6 +2309,7 @@ class CranberryInitScreen(SplashScreen):
 class AppObject(wx.App):
 
     def OnInit(self):
+    
         # Control some system options.
         wx.SystemOptions.SetOption("msw.remap", 2)
         wx.SystemOptions.SetOption("msw.notebook.themed-background", 1)

@@ -1,5 +1,6 @@
 # cranberry_logic.py
-# utf-8
+# Author : Prince O. Asiedu
+# Date: February, 2020
 
 import os
 import wx
@@ -279,13 +280,13 @@ class Admin(model.Access_Session):
 		except Exception as error: raise error
 		return user
 	
-	def edit_user(self, uid, username, password):
+	def edit_user(self, username, password):
 		password = hash_password(password)
-		try: self.update_user(uid, username, password)
+		try: self.update_user(username, password)
 		except Exception as error: raise error
 
-	def delete_user(self, uid):
-		try: self.remove_user(uid)
+	def delete_user(self, username):
+		try: self.remove_user(username)
 		except Exception as error: raise error
 	
 	def authenticate(self, username, password):
@@ -342,11 +343,6 @@ class Search:
 class Calendar():
 	def __init__(self):
 		pass
-
-
-# -------------------------------------------------------------------------
-# Here lies a number of little beasts: guns and ammo to make me powerful
-#--------------------------------------------------------------------------
 
 
 class TextMessenger:
@@ -426,7 +422,7 @@ def wxdate2pydate(date):
 		except Exception as error: raise error
 
 def main():
-	Admin().delete_user('PrinceA')
+	pass
 	
 
 if __name__ == '__main__':

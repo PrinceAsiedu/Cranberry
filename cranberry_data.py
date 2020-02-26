@@ -77,26 +77,17 @@ class Access_Session:
 		except NoResultFound:
 			msg = 'User not found - {}'.format(username)
 			raise UserNotFound(msg)
-		
 
-	def get_user_by_id(self, aid):
-		query = self.session.query(Access)
-		try: user = query.get(aid)
-		except NoResultFound:
-			msg = 'User not found - {}'.format(aid)
-			raise UserNotFound(msg)
-		return user
-
-	def update_user(self, aid, name, passw):
+	def update_user(self, username, passw):
 		try:
-			user = self.get_user_by_id(aid)
-			if name: user.aname = name
+			user = self.get_user(username)
+			if username: user.aname = username
 			if passw: user.passw = passw
 			self.session.commit()
 		
 		except NoResultFound:
 				self.session.rollback()
-				msg = 'User not found - {}'.format(aid)
+				msg = 'User not found - {}'.format(username)
 				raise UserNotFound(msg)
 
 		except IntegrityError as error:
@@ -104,7 +95,7 @@ class Access_Session:
 			error_msg = error.args[0]
 
 			if 'already exits' in error_msg:
-				msg = 'Username already taken - {}'.format(name)
+				msg = 'Username already taken - {}'.format(username)
 				raise UserAlreadyExistError(msg)
 			else: 
 				raise UnknownDatabaseError(error_msg)
