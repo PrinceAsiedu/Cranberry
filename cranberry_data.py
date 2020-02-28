@@ -73,30 +73,21 @@ class Access_Session:
 	def get_user(self, username):
 		query = self.session.query(Access)
 		
-		try: user = query.filter_by(aname=username).one()
+		try: user = query.filter_by(aname=username).one(); return user
 		except NoResultFound:
 			msg = 'User not found - {}'.format(username)
 			raise UserNotFound(msg)
-		return user
 
-	def get_user_by_id(self, aid):
-		query = self.session.query(Access)
-		try: user = query.get(aid)
-		except NoResultFound:
-			msg = 'User not found - {}'.format(aid)
-			raise UserNotFound(msg)
-		return user
-
-	def update_user(self, aid, name, passw):
+	def update_user(self, username, new_uname, passw):
 		try:
-			user = self.get_user_by_id(aid)
-			if name: user.aname = name
+			user = self.get_user(username)
+			if new_uname: user.aname = new_uname
 			if passw: user.passw = passw
 			self.session.commit()
 		
 		except NoResultFound:
 				self.session.rollback()
-				msg = 'User not found - {}'.format(aid)
+				msg = 'User not found - {}'.format(username)
 				raise UserNotFound(msg)
 
 		except IntegrityError as error:
@@ -104,26 +95,33 @@ class Access_Session:
 			error_msg = error.args[0]
 
 			if 'already exits' in error_msg:
-				msg = 'Username already taken - {}'.format(name)
+				msg = 'Username already taken - {}'.format(username)
 				raise UserAlreadyExistError(msg)
 			else: 
 				raise UnknownDatabaseError(error_msg)
 
-	def remove_superuser(self, aid):
+	def remove_user(self, uname):
 		try:		
-			superuser = self.get_superuser(aid)
+			superuser = self.get_user(uname)
 			self.session.delete(superuser)
 			self.session.flush()
 			self.session.commit()
 						
 		except NoResultFound:
 			self.session.rollback()  
-			msg = 'User not found - {}'.format(aid)
+			msg = 'User not found - {}'.format(uname)
 			raise UserNotFound(msg)
 
 		except Exception as error:
 			error_msg = error.args[0]
 			raise UnknownDatabaseError(error_msg)
+	
+	def get_users(self):
+		try: users = self.session.query(Access).all(); return users
+		except Exception as error: raise error
+	
+	def get_count(self):
+		return len(self.get_users())
 	
 
 class Staff(Base):
@@ -500,6 +498,106 @@ class Inventory_Session():
 			raise error
 
 
+class Fees(Base):
+
+	__tablename__ = 'tuition_fees'
+
+	fid = Column(Integer, primary_key=True)
+	amount = Column(Integer, nullable=False)
+	payer = Column(String, nullable=False)
+	reciever = Column(String, nullable=False)
+	arrears = Column(Integer, nullable=True)
+	full_payment = Column(String, nullable=False)
+	date_paid = Column(DateTime, nullable=False)
+
+
+class Fee_Session():
+
+	def __init__(self,amt='',pyr='',rcv='',ars='',flp='',dtp='', session=__sess__):
+		self.amount = amt
+		self.payer = pyr
+		self.receiver = rcv
+		self.arrears = ars 
+		self.full = flp
+		self.date = dtp
+
+		self.session = session
+
+	def get_total(self):
+		fees_paid = 0
+		fees = self.get_all_fees()
+		for fee in fees:
+			fees_paid += fee.amount
+		return fees_paid
+
+	def pay_fee(self):
+		try: 
+			fee = Fees(
+						amount=self.amount, 
+						payer=self.payer,
+						receiver=self.receiver,
+						arrears=self.arrears, 
+						full_payment=self.full,
+						date_paid=self.date
+					)
+
+			self.session.add(fee)
+			self.session.commit()
+
+		except Exception as error:
+			self.session.rollback()
+			raise error
+		
+	def get_fee(self, fid):
+		try: 
+			fee = self.session.query(Fees).get(fid)
+			return fee
+
+		except Exception as error: raise error
+
+	def get_all_fees(self):
+		try: 
+			fees = self.session.query(Fees).all()
+			return fees
+
+		except Exception as error: raise error
+
+	def update_fee(self, fid):
+		try:
+			fee = self.get_fee(fid)
+			if self.amount: fee.amount = self.amount
+			if self.payer: fee.payer = self.payer
+			if self.receiver: fee.receiver = self.receiver
+			if self.arrears: fee.arrears = self.arrears
+			if self.full: fee.full_payment = self.full
+			if self.date: fee.date_paid = self.date
+
+			self.session.commit()
+		
+		except Exception as error:
+			self.session.rollback()
+			raise error
+
+	def delete_fee(self, pid):
+		try:
+			fee = self.get_fee(pid)
+			self.session.delete(fee)
+			self.session.flush()
+			self.session.commit()
+		
+		except Exception as error:
+			self.session.rollback()
+			raise error
+
+# class TextMessages(Base):
+
+# 	__tablename__ = 'sms'
+
+
+# class Emails(Base):
+
+# 	__tablename__ = 'emails'
+
 def search(keyword):
 	results = []
 
@@ -554,6 +652,7 @@ def search(keyword):
 	
 
 def main():
+	# create_db()
 	pass
 	
 	

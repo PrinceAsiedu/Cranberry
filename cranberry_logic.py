@@ -1,5 +1,6 @@
 # cranberry_logic.py
-# utf-8
+# Author : Prince O. Asiedu
+# Date: February, 2020
 
 import os
 import wx
@@ -263,6 +264,65 @@ class Inventory():
 		return total
 
 
+class Fees():
+
+	def __init__(self, amt='',pyr='',rcv='',ars='',flp='',dtp=''):
+
+		self.amount = amt
+		self.payer = pyr
+		self.receiver = rcv
+		self.arrears = ars 
+		self.is_full_payment = flp
+		self.date_paid = dtp
+
+		self.session = model.Fee_Session
+	
+	def make_payment(self):
+		try:
+			self.date_paid = wxdate2pydate(self.date_paid)
+			new_fee = self.session(self.amount, self.payer, self.receiver, 
+								self.arrears, self.is_full_payment, self.date_paid)
+			new_fee.pay_fee()
+		
+		except Exception as error: raise error
+
+	def find_fee(self, fid):
+		try:
+			fee = self.session().get_fee(fid)
+			return fee
+		except Exception as error: raise error
+	
+	def get_new_payment(self):
+		items = self.all_items()
+		item = items.pop()
+		return item
+
+	def all_fees(self):
+		fees = []
+		try: fees = self.session().get_all_fees()
+		except Exception as error: raise error
+		finally: return fees
+			
+	def edit_fee(self, fid):
+		try:
+			if not self.date_paid == '':
+				self.date_paid = wxdate2pydate(self.date_paid)
+			
+			fee = self.session(self.amount, self.payer, self.receiver, 
+								self.arrears, self.is_full_payment, self.date_paid)
+			fee.update_fee(fid)
+	
+		except Exception as error: raise error			
+
+	def delete_fee(self, fid):
+		try: self.session().delete_fee(fid)
+		except Exception as error: raise error
+
+	def fee_amount_total(self):
+		total = self.session().get_total()
+		return total
+
+
 class Admin(model.Access_Session):
 
 	def __init__(self):
@@ -279,24 +339,28 @@ class Admin(model.Access_Session):
 		except Exception as error: raise error
 		return user
 	
-	def edit_user(self, uid, username, password):
+	def edit_user(self, username, new_uname, password):
 		password = hash_password(password)
-		try: self.update_user(uid, username, password)
+		try: self.update_user(username, new_uname, password)
 		except Exception as error: raise error
 
-	def delete_user(self, uid):
-		pass
+	def delete_user(self, username):
+		try: self.remove_user(username)
+		except Exception as error: raise error
 	
 	def authenticate(self, username, password):
 		user = self.fetch_user(username)
 
 		if not bcrypt.checkpw(password.encode(), user.access):
-			msg = 'Incorrect password for {}'.format(username)
+			msg = 'Wrong username or password'
 			raise AuthenticationError(msg)
 		else:
 			self.logged_in = True
 		
 		return self.logged_in
+
+	def user_total(self):
+		return self.get_count()
 
 
 class Search:
@@ -338,11 +402,6 @@ class Search:
 class Calendar():
 	def __init__(self):
 		pass
-
-
-# -------------------------------------------------------------------------
-# Here lies a number of little beasts: guns and ammo to make me powerful
-#--------------------------------------------------------------------------
 
 
 class TextMessenger:
