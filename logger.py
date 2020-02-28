@@ -1,3 +1,12 @@
+from urllib.request import urlopen
+
+def test_con():
+    try:
+        urlopen('https://www.google.com', timeout=10)
+        return True
+    except Exception as error:
+        # return False
+        raise error
 
 class Logger(object):
     """A file-based message logger with the following properties 
@@ -29,3 +38,6 @@ class Logger(object):
 
     def debug(self, msg):
        self._write_log('DEBUG', msg)
+
+
+print(test_con())
