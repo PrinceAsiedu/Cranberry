@@ -652,6 +652,7 @@ def search(keyword):
 	
 
 def main():
+	# create_db()
 	pass
 	
 	
