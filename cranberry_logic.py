@@ -8,7 +8,8 @@ import bcrypt
 
 from datetime import datetime
 from cranerror import AuthenticationError
-import cranberry_data as model		
+import cranberry_data as model
+from urllib.request import urlopen		
 from twilio.rest import Client as sms_client
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -406,18 +407,21 @@ class Calendar():
 
 class TextMessenger:
 	
-	def __init__(self):
-		pass
+	def __init__(self, rec, message):
+		self.receipient = rec
+		self.msg = message
 
-	def send_sms(self, rec, message):
-		# Send text messages 
-		# Load some presets from the enviroment
+	def send_sms(self):
+		"""Send the text message"""
 		
-		acctSID = os.environ.get('TWILIO_ACCOUNT_SID') # Account Subscriber ID
-		authToken =  os.environ.get('TWILIO_AUTH_TOKEN') # Authentication Token
-		twilioNum = '+19384440798' # Twilio account number
-		client = sms_client(acctSID, authToken)
-		message = client.messages.create(body=message, from_=twilioNum, to=rec)
+		if _check_for_connection:
+
+			# Load some presets from the enviroment
+			acctSID = 'AC41b6d0053f937ecaf0eaf4557db45a8f'# os.environ.get('') # Account Subscriber ID
+			authToken =  os.environ.get('41518d4bfa7c8ea73f768ae29d04b42f') # Authentication Token
+			twilioNum = '+19384440798' # Twilio account number
+			client = sms_client(acctSID, authToken)
+			message = client.messages.create(body=message, from_=twilioNum, to=rec)
 
 
 class MailSender():
@@ -480,8 +484,17 @@ def wxdate2pydate(date):
 		
 		except Exception as error: raise error
 
+def _check_for_connection():
+	flag = False
+	try:
+		urlopen('https://www.google.com', timeout=10)
+		flag = True
+		return flag
+	except Exception as error:
+		return flag
+
 def main():
-	pass
+	print(_check_for_connection())
 	
 
 if __name__ == '__main__':
