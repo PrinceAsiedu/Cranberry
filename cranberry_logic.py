@@ -7,14 +7,21 @@ import wx
 import bcrypt
 
 from datetime import datetime
-from cranerror import AuthenticationError
-import cranberry_data as model
-from urllib.request import urlopen		
+from urllib.request import urlopen	
+
 from twilio.rest import Client as sms_client
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
+import cranberry_data as model
+from logger import Logger
+from cranerror import AuthenticationError
+
+
 HASH_WORK_FACTOR = 15
+MAIL_TEMPLATE = 'data/mailtemplate.txt'
+LOG_FILE = 'data/app_log.txt'
+LOG = Logger(LOG_FILE)
 
 class Student():
 	def __init__(self, fname='', lname='',sex='',bd='',parent='',num='',mail='',addr='',lvl='', ste='',adate=''):
@@ -410,18 +417,43 @@ class TextMessenger:
 	def __init__(self, rec, message):
 		self.receipient = rec
 		self.msg = message
+		self.sent = False
 
 	def send_sms(self):
 		"""Send the text message"""
 		
-		if _check_for_connection:
+		if _check_for_connection is True:
+			try:
+				# Load some presets from the enviroment variables
+				acctSID = 'AC41b6d0053f937ecaf0eaf4557db45a8f' # os.environ.get('TWILIO_ACCOUNT_SID') # Account Subscriber ID
+				authToken =  '41518d4bfa7c8ea73f768ae29d04b42f' # os.environ.get('TWILIO_AUTH_TOKEN') # Authentication Token
+				twilioNum = '+19384440798' # Twilio account number
+				client = sms_client(acctSID, authToken)
+				message = client.messages.create(body=self.msg, from_=twilioNum, to=self.receipient)
 
-			# Load some presets from the enviroment
-			acctSID = 'AC41b6d0053f937ecaf0eaf4557db45a8f'# os.environ.get('') # Account Subscriber ID
-			authToken =  os.environ.get('41518d4bfa7c8ea73f768ae29d04b42f') # Authentication Token
-			twilioNum = '+19384440798' # Twilio account number
-			client = sms_client(acctSID, authToken)
-			message = client.messages.create(body=message, from_=twilioNum, to=rec)
+				# Save the message in the database after sending.
+				self.sent = True
+				self.save_msg(self.sent)
+				
+				msg = 'Text message sent'
+				time = datetime.now()
+				LOG.info(msg, time)
+			
+			except Exception as error:
+				msg = 'Text message not sent [%s]' % error
+				time = datetime.now()
+				LOG.error(msg, time)
+				self.save_msg(self.sent)
+		
+		else: 
+			msg = 'Text message not sent [Failed to establish internet connection]' 
+			time = datetime.now()
+			LOG.warn(msg, time)
+			self.save_msg(self.sent)
+	
+	def save_msg(self, status):
+		# Add code to save msg to db
+		print(status)
 
 
 class MailSender():
@@ -433,9 +465,10 @@ class MailSender():
 		self.body = msg_body
 		self._from = 'prince14asiedu@gmail.com'
 		# self.attachments = attachments
-		# 		
+		
 		# Create an html message template
-		html = open('data/mailtemplate.txt', 'r')
+		mode = 'r'
+		html = open(MAIL_TEMPLATE, mode)
 		text = html.read()
 		html.close()
 
@@ -494,8 +527,8 @@ def _check_for_connection():
 		return flag
 
 def main():
-	print(_check_for_connection())
-	
+	msg = TextMessenger('+233553288993', 'I love myself')
+	msg.send_sms()
 
 if __name__ == '__main__':
 	main()

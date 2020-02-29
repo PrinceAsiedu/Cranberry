@@ -1,12 +1,3 @@
-from urllib.request import urlopen
-
-def test_con():
-    try:
-        urlopen('https://www.google.com', timeout=10)
-        return True
-    except Exception as error:
-        # return False
-        raise error
 
 class Logger(object):
     """A file-based message logger with the following properties 
@@ -20,24 +11,21 @@ class Logger(object):
         """Return a logger object whose file_name is *file_name*"""
         self.file_name = file_name
             
-    def _write_log(self, level, msg):
+    def _write_log(self, level, msg, logtime):
         with open(self.file_name, 'a') as log_file:
-                log_file.write('[{0}] {1}\n'.format(level,msg))
+                log_file.write('[{0}]\n\n{1}\nDatetime: {2}\n\n'.format(level,msg,logtime))
 
-    def critical(self, msg):
-        self._write_log('CRITICAL', msg)
+    def critical(self, msg, logtime):
+        self._write_log('CRITICAL', msg, logtime)
 
-    def error(self, msg):
-        self._write_log('ERROR', msg)
+    def error(self, msg, logtime):
+        self._write_log('ERROR', msg, logtime)
 
-    def warn(self, msg):
-       self._write_log('WARN', msg)
+    def warn(self, msg, logtime):
+       self._write_log('WARN', msg, logtime)
 
-    def info(self, msg):
-       self._write_log('INFO', msg)
+    def info(self, msg, logtime):
+       self._write_log('INFO', msg, logtime)
 
-    def debug(self, msg):
-       self._write_log('DEBUG', msg)
-
-
-print(test_con())
+    def debug(self, msg, logtime):
+       self._write_log('DEBUG', msg, logtime)
