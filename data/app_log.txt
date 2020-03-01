@@ -1,0 +1,5 @@
+[WARN]
+
+Text message not sent [Failed to establish internet connection]
+Datetime: 2020-02-29 21:13:06.160299
+

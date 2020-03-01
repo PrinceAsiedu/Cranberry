@@ -4,19 +4,15 @@
 # to-do list  
 # -----------
 
-# TODO: rewrite all exception statements to raise CranError
 # TODO: store copies of text messages in database 
-# TODO: unsent text messages should have a sent flag set to False
-# TODO: check for internet availability before sending sms
 # TODO: create a server process to handle message sending and receiving 
 # TODO: store copies of mails in database 
 # TODO: unsent mails should have a sent flag set to False
-# TODO: check for internet availability before sending email
 # TODO: create a server process to handle sending and receiving mails
 # TODO: Create printing system
 # TODO: Create a financial plotting system
 
-Project         = 'cranberry_ui.py'
+software        = 'cranberry_ui.py'
 __version__     = "1.3"
 __date__        = "February, 2020"
 __author__      = "Prince Oforh Asiedu"
@@ -48,7 +44,7 @@ ALPHA_ONLY = 2
 DIGIT_ONLY = 3
 PRINTABLE  = 4
 
-APP_ICON = 'cherrytree.png'
+APP_ICON = 'images/cherrytree.png'
 
 class TextCtrlValidator(wx.Validator):
     """ This validator is used to ensure that the user has entered 
@@ -2480,7 +2476,7 @@ class AppFrame(wx.Frame):
             body = dialog.body.GetValue()
         
             sender = Controller.TextMessenger()
-            sender.send_sms(receiver, body)
+            sender.send(receiver, body)
             notify = adv.NotificationMessage(
                 title="Text Message",
                 message="Text message sent to \n%s" % receiver,

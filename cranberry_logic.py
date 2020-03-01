@@ -419,7 +419,7 @@ class TextMessenger:
 		self.msg = message
 		self.sent = False
 
-	def send_sms(self):
+	def send(self):
 		"""Send the text message"""
 		
 		if _check_for_connection is True:
@@ -452,7 +452,7 @@ class TextMessenger:
 			self.save_msg(self.sent)
 	
 	def save_msg(self, status):
-		# Add code to save msg to db
+		# TODO: Add code to save msg and status to db
 		print(status)
 
 
@@ -527,8 +527,8 @@ def _check_for_connection():
 		return flag
 
 def main():
-	msg = TextMessenger('+233553288993', 'I love myself')
-	msg.send_sms()
+	msg = TextMessenger('0553288993', 'I love my life wai')
+	msg.send()
 
 if __name__ == '__main__':
 	main()

@@ -578,9 +578,9 @@ class Fee_Session():
 			self.session.rollback()
 			raise error
 
-	def delete_fee(self, pid):
+	def delete_fee(self, fid):
 		try:
-			fee = self.get_fee(pid)
+			fee = self.get_fee(fid)
 			self.session.delete(fee)
 			self.session.flush()
 			self.session.commit()
@@ -589,9 +589,52 @@ class Fee_Session():
 			self.session.rollback()
 			raise error
 
-# class TextMessages(Base):
 
-# 	__tablename__ = 'sms'
+class TextMessages(Base):
+	
+	__tablename__ = 'sms'
+
+	mid = Column(Integer, primary_key=True)
+	recipient = Column(String, nullable=False)
+	message =  Column(String, nullable=False)
+	status = Column(Boolean, nullable=False)
+	time_sent = Column(DateTime, nullable=False)
+
+
+class SMS_Session():
+
+	def __init__(self, rec, msg, sts, time, session=__sess__):
+		self.recipient = rec
+		self.message = msg
+		self.status = sts
+		self.time_sent = time
+		
+		self.session = session
+	
+	def create_msg(self):
+		try:
+			new_msg = TextMessages(self.recipient, self.message, self.status, self.time_sent)
+			self.session().add(new_msg)
+			self.session.commit()
+		except Exception as error: 
+			self.session.rollback()
+			raise error
+
+	def get_msg(self, mid):
+		try: msg = self.session.query(TextMessages).get(mid); return msg
+		except Exception as error: raise error
+
+	def get_all_msgs(self):
+		try: msgs = self.session.query(TextMessages).all(); return msgs
+		except Exception as error: raise error
+
+	def delete_msg(self, mid):
+		pass
+
+	def update_msg(self):
+		pass
+
+	def total(self): count = len(self.get_all_msgs()); return count
 
 
 # class Emails(Base):
