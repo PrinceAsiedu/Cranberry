@@ -22,12 +22,13 @@ from sqlalchemy.orm import sessionmaker, relationship, backref
 
 date = dt.now()
 Base = declarative_base()
-ENGINE = create_engine('sqlite:///cranberry.db', echo=False)
+ENGINE = create_engine('sqlite:///data/cranberry.db', echo=False)
 
 
 def start_db_session():
 	Session = sessionmaker(bind=ENGINE)
 	session = Session()
+	session.no_autoflush
 	return session
 
 def make_relationships():
@@ -38,8 +39,6 @@ def create_db():
 	make_relationships()
 
 __sess__ = start_db_session()
-__sess__.no_autoflush
-
 
 class Access(Base):
 
@@ -718,6 +717,6 @@ def main():
 	# create_db()
 	pass
 	
-	
+
 if __name__ == "__main__":
 	main()

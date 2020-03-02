@@ -97,8 +97,7 @@ class Images():
 		self.edit = d+'push1.png'
 
 		self.unlock = d+'open.png'
-		
-		
+				
 
 class Student():
 	def __init__(self, fname='', lname='',sex='',bd='',parent='',num='',mail='',addr='',lvl='', ste='',adate=''):

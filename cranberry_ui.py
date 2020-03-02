@@ -1912,6 +1912,7 @@ class SmsPad(sc.SizedDialog):
         pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
         pane.SetSizerProps(expand=True, proportion=1)
         pane.SetSizerType("vertical")
+        self.SetIcon(wx.Icon(APP_ICON))
 
         # font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
 
@@ -1940,6 +1941,7 @@ class MailPad(sc.SizedDialog):
         pane = sc.SizedScrolledPanel(cPane, wx.ID_ANY)
         pane.SetSizerProps(expand=True, proportion=1)
         pane.SetSizerType("vertical")
+        self.SetIcon(wx.Icon(APP_ICON))
 
         font = wx.Font(wx.FontInfo(10).FaceName('Candara'))
 
