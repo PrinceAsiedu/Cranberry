@@ -23,6 +23,83 @@ MAIL_TEMPLATE = 'data/mailtemplate.txt'
 LOG_FILE = 'data/app_log.txt'
 LOG = Logger(LOG_FILE)
 
+class Images():
+	'''
+	Object holding all images used in the Cranberry Application Interface
+
+	Note:
+		Any change regaring an image name in the images 
+		directory should be effected in this object also.
+	'''
+	def __init__(self):
+
+		# Image directory
+		d = 'images/'
+
+		# Application icon
+		self.icon = d+'cherrytree.png'
+
+		# Startup splash image
+		self.splash = d+'cr3.png'
+
+		# Toolbar Menu images
+		self.email = d+'envelopeout.png'
+		self.sms = d+'chatout.png'
+		self.reports = d+'cvout.png'
+		self.settings = d+'usersetout.png'
+		self.logout = d+'exitout.png'
+		self.info = d+'help.png'
+
+		# Settings menu images 
+		self.new_user = d+'newuser.png'
+		self.remove_user = d+'remuser.png'
+		self.edit_user = d+'edit_profileout.png'
+
+		# Info menu images
+		self.help = d+'man.png'
+		self.about = d+'info1.png'
+
+		# Search box images
+		self.search = d+'search.png'
+		self.cancel = d+'cancel.png'
+
+		# Home Panel images
+		self.home_icon = d+'homeout.png'
+		self.stu_img = d+'students_stat.png'
+		self.stf_img = d+'staff_stat.png'
+		self.suj_img = d+'course_stat.png'
+		self.itm_img = d+'list_stat.png'
+
+		# Staff Panel images 
+		self.staff_icon = d+'teacherout.png'
+
+		# Student Panel images 
+		self.student_icon = d+'studentsout.png'
+
+		# Subject Panel images 
+		self.subject_icon = d+'courseout.png'
+
+		# Fee Panel images
+		self.fee_icon = d+'feesout.png'
+
+		# Inventory Panel images
+		self.inventory_icon = d+'itemsout.png'
+
+		# Attendance Panel images 
+		self.attendance_icon = d+'attendanceout.png'
+
+		# Report Panel images 
+		self.report_icon = d+'report_cardout.png'
+
+		# other images
+		self.add = d+'add1.png'
+		self.erase = d+'trashout.png'
+		self.edit = d+'push1.png'
+
+		self.unlock = d+'open.png'
+		
+		
+
 class Student():
 	def __init__(self, fname='', lname='',sex='',bd='',parent='',num='',mail='',addr='',lvl='', ste='',adate=''):
 		
@@ -432,28 +509,32 @@ class TextMessenger:
 				message = client.messages.create(body=self.msg, from_=twilioNum, to=self.receipient)
 
 				# Save the message in the database after sending.
+				time = datetime.now()
 				self.sent = True
-				self.save_msg(self.sent)
+				self.save_msg(self.sent, time)
 				
 				msg = 'Text message sent'
-				time = datetime.now()
 				LOG.info(msg, time)
 			
 			except Exception as error:
 				msg = 'Text message not sent [%s]' % error
 				time = datetime.now()
 				LOG.error(msg, time)
-				self.save_msg(self.sent)
+				self.save_msg(self.sent, time)
 		
 		else: 
 			msg = 'Text message not sent [Failed to establish internet connection]' 
 			time = datetime.now()
 			LOG.warn(msg, time)
-			self.save_msg(self.sent)
+			self.save_msg(self.sent, time)
 	
-	def save_msg(self, status):
-		# TODO: Add code to save msg and status to db
-		print(status)
+	def save_msg(self, status, time):
+		msg = model.SMS_Session(self.receipient, self.msg, status, time)
+		msg.create_msg()
+
+	def send_unsent(self):pass
+	
+	def total_sent_and_unsent(self):pass
 
 
 class MailSender():
@@ -527,8 +608,17 @@ def _check_for_connection():
 		return flag
 
 def main():
-	msg = TextMessenger('0553288993', 'I love my life wai')
-	msg.send()
+	msg = model.SMS_Session().get_all_msgs()
+	sent = 0
+	unsent = 0
+	for m in msg:
+		if m.status is True:
+			sent += 1
+		else: 
+			unsent += 1
+	
+	s = 'Sent   : {}\nUnsent : {}'.format(sent, unsent)
+	print(s)
 
 if __name__ == '__main__':
-	main()
+	main() 

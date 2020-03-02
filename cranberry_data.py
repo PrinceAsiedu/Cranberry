@@ -603,7 +603,7 @@ class TextMessages(Base):
 
 class SMS_Session():
 
-	def __init__(self, rec, msg, sts, time, session=__sess__):
+	def __init__(self, rec='', msg='', sts='', time='', session=__sess__):
 		self.recipient = rec
 		self.message = msg
 		self.status = sts
@@ -613,8 +613,14 @@ class SMS_Session():
 	
 	def create_msg(self):
 		try:
-			new_msg = TextMessages(self.recipient, self.message, self.status, self.time_sent)
-			self.session().add(new_msg)
+			new_msg = TextMessages(
+				recipient=self.recipient,
+				message=self.message, 
+				status=self.status, 
+				time_sent=self.time_sent
+			)
+
+			self.session.add(new_msg)
 			self.session.commit()
 		except Exception as error: 
 			self.session.rollback()
@@ -629,10 +635,23 @@ class SMS_Session():
 		except Exception as error: raise error
 
 	def delete_msg(self, mid):
-		pass
+		try:
+			msg = self.get_msg(mid)
+			self.session().delete(msg)
+			self.session().flush()
+			self.session().commit()
+		except Exception as error:
+			self.session().rollback()
+			raise error
 
-	def update_msg(self):
-		pass
+	def update_msg(self, mid):
+		try:
+			msg = self.get_msg(mid)
+			if self.status: msg.status = self.status
+			
+			self.session.commit()
+		
+		except Exception as error: self.session.rollback(); raise error
 
 	def total(self): count = len(self.get_all_msgs()); return count
 
@@ -640,6 +659,7 @@ class SMS_Session():
 # class Emails(Base):
 
 # 	__tablename__ = 'emails'
+
 
 def search(keyword):
 	results = []

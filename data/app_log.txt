@@ -3,3 +3,43 @@
 Text message not sent [Failed to establish internet connection]
 Datetime: 2020-02-29 21:13:06.160299
 
+[WARN]
+
+Text message not sent [Failed to establish internet connection]
+Datetime: 2020-03-01 21:07:53.172138
+
+[WARN]
+
+Text message not sent [Failed to establish internet connection]
+Datetime: 2020-03-01 21:33:33.255127
+
+[WARN]
+
+Text message not sent [Failed to establish internet connection]
+Datetime: 2020-03-01 21:33:35.991031
+
+[WARN]
+
+Text message not sent [Failed to establish internet connection]
+Datetime: 2020-03-01 21:35:51.894039
+
+[WARN]
+
+Text message not sent [Failed to establish internet connection]
+Datetime: 2020-03-01 21:35:58.269899
+
+[WARN]
+
+Text message not sent [Failed to establish internet connection]
+Datetime: 2020-03-01 21:37:22.360432
+
+[WARN]
+
+Text message not sent [Failed to establish internet connection]
+Datetime: 2020-03-01 21:39:46.394295
+
+[WARN]
+
+Text message not sent [Failed to establish internet connection]
+Datetime: 2020-03-02 14:12:57.303374
+

@@ -3,14 +3,11 @@
 # -----------
 # to-do list  
 # -----------
-
-# TODO: store copies of text messages in database 
 # TODO: create a server process to handle message sending and receiving 
 # TODO: store copies of mails in database 
 # TODO: unsent mails should have a sent flag set to False
 # TODO: create a server process to handle sending and receiving mails
 # TODO: Create printing system
-# TODO: Create a financial plotting system
 
 software        = 'cranberry_ui.py'
 __version__     = "1.3"
@@ -44,7 +41,9 @@ ALPHA_ONLY = 2
 DIGIT_ONLY = 3
 PRINTABLE  = 4
 
-APP_ICON = 'images/cherrytree.png'
+IMGS = Controller.Images()
+
+APP_ICON = IMGS.icon
 
 class TextCtrlValidator(wx.Validator):
     """ This validator is used to ensure that the user has entered 
@@ -242,7 +241,7 @@ class HomePanel(wx.Panel):
         # Student statistic body
         stu_body = wx.BoxSizer(wx.HORIZONTAL)
 
-        stu_bmp = wx.StaticBitmap(self, -1, wx.Bitmap('students_stat.png'))
+        stu_bmp = wx.StaticBitmap(self, -1, wx.Bitmap(IMGS.stu_img))
         self.stu_stat = wx.StaticText(self, -1, str(Controller.Student().student_total()), 
                 style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
         self.stu_stat.SetFont(FONT_SMALL)
@@ -267,7 +266,7 @@ class HomePanel(wx.Panel):
         # Staff statistic body
         stf_body = wx.BoxSizer(wx.HORIZONTAL)
 
-        stf_bmp = wx.StaticBitmap(self, -1, wx.Bitmap('staff_stat.png'))
+        stf_bmp = wx.StaticBitmap(self, -1, wx.Bitmap(IMGS.stf_img))
         self.stf_stat = wx.StaticText(self, -1, str(Controller.Staff().staff_total()), style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
         self.stf_stat.SetFont(FONT_SMALL)
         self.stf_stat.SetForegroundColour('grey35')
@@ -291,7 +290,7 @@ class HomePanel(wx.Panel):
         # Courses statistic body
         cse_body = wx.BoxSizer(wx.HORIZONTAL)
 
-        cse_bmp = wx.StaticBitmap(self, -1, wx.Bitmap('course_stat.png'))
+        cse_bmp = wx.StaticBitmap(self, -1, wx.Bitmap(IMGS.suj_img))
         self.cse_stat = wx.StaticText(self, -1, str(Controller.Courses().course_total()), style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
         self.cse_stat.SetFont(FONT_SMALL)
         self.cse_stat.SetForegroundColour('grey35')
@@ -314,7 +313,7 @@ class HomePanel(wx.Panel):
         # Items statistic body
         itm_body = wx.BoxSizer(wx.HORIZONTAL)
 
-        itm_bmp = wx.StaticBitmap(self, -1, wx.Bitmap('list_stat.png'))
+        itm_bmp = wx.StaticBitmap(self, -1, wx.Bitmap(IMGS.itm_img))
         self.itm_stat = wx.StaticText(self, -1, str(Controller.Inventory().item_total()), style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
         self.itm_stat.SetFont(FONT_SMALL)
         self.itm_stat.SetForegroundColour('grey35')
@@ -441,19 +440,19 @@ class StaffPanel(wx.Panel):
         # colour for platebuttons 
         col = wx.Colour('dodgerblue')
         # add staff member button
-        add_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('add1.png'), label='New')
+        add_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.add), label='New')
         add_staff.SetFont(btnFont)
         add_staff.SetPressColor(col)
         add_staff.Bind(wx.EVT_BUTTON, self.OnNewStaff)
 
         # remove staff member button
-        remove_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Erase')
+        remove_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.erase), label='Erase')
         remove_staff.SetFont(btnFont)
         remove_staff.SetPressColor(col)
         remove_staff.Bind(wx.EVT_BUTTON, self.OnRemoveStaff)
 
         # save changes made to staff data
-        save_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit')
+        save_staff = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.edit), label='Edit')
         save_staff.SetFont(btnFont)
         save_staff.SetPressColor(col)
         save_staff.Bind(wx.EVT_BUTTON, self.OnEditEmployee)
@@ -629,13 +628,13 @@ class StaffPanel(wx.Panel):
         menu = wx.Menu()
 
         new_wrk = wx.MenuItem(menu, self.new_id, 'New Employee')
-        new_wrk.SetBitmap(wx.Bitmap('add1.png'))
+        new_wrk.SetBitmap(wx.Bitmap(IMGS.add))
 
         del_wrk = wx.MenuItem(menu, self.remove_id, 'Remove Employee')
-        del_wrk.SetBitmap(wx.Bitmap('trashout.png'))
+        del_wrk.SetBitmap(wx.Bitmap(IMGS.erase))
 
         edit_wrk = wx.MenuItem(menu,self.edit_id, 'Edit Employee Details')
-        edit_wrk.SetBitmap(wx.Bitmap('push1.png'))
+        edit_wrk.SetBitmap(wx.Bitmap(IMGS.edit))
 
         menu.Append(new_wrk)
         menu.Append(del_wrk)
@@ -747,19 +746,19 @@ class StudentPanel(wx.Panel):
         # colour for platebuttons 
         col = wx.Colour('dodgerblue')
         # new student button
-        new_student = pbtn(self, id=100, bmp=wx.Bitmap('add1.png'), label='New')
+        new_student = pbtn(self, id=100, bmp=wx.Bitmap(IMGS.add), label='New')
         new_student.SetFont(btnFont)
         new_student.SetPressColor(col)
         new_student.Bind(wx.EVT_BUTTON, self.OnNewStudent)
 
         # remove student button
-        remove_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Erase')
+        remove_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.erase), label='Erase')
         remove_student.SetFont(btnFont)
         remove_student.SetPressColor(col)
         remove_student.Bind(wx.EVT_BUTTON, self.OnRemoveStudent)
 
         # save changes made to student data button
-        edit_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit')
+        edit_student = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.edit), label='Edit')
         edit_student.SetFont(btnFont)
         edit_student.SetPressColor(col)
         edit_student.Bind(wx.EVT_BUTTON, self.OnEditStudent)
@@ -951,13 +950,13 @@ class StudentPanel(wx.Panel):
         menu = wx.Menu()
            
         new_stu = wx.MenuItem(menu, self.new_id, 'New Student')
-        new_stu.SetBitmap(wx.Bitmap('add1.png'))
+        new_stu.SetBitmap(wx.Bitmap(IMGS.add))
 
         del_stu = wx.MenuItem(menu, self.remove_id, 'Remove Student')
-        del_stu.SetBitmap(wx.Bitmap('trashout.png'))
+        del_stu.SetBitmap(wx.Bitmap(IMGS.erase))
 
         edit_stu = wx.MenuItem(menu,self.edit_id, 'Edit Student Information')
-        edit_stu.SetBitmap(wx.Bitmap('push1.png'))
+        edit_stu.SetBitmap(wx.Bitmap(IMGS.edit))
 
         menu.Append(new_stu)
         menu.Append(del_stu)
@@ -1032,19 +1031,19 @@ class CoursePanel(wx.Panel):
         # colour for platebuttons 
         col = wx.Colour('dodgerblue')
         # new course button
-        new_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('add1.png'), label='New')
+        new_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.add), label='New')
         new_course.SetFont(btnFont)
         new_course.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnNewCourse, new_course)  # Bind function to button
 
         # remove course button
-        remove_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Erase')
+        remove_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.erase), label='Erase')
         remove_course.SetFont(btnFont)
         remove_course.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnRemoveCourse, remove_course)
 
         # save changes made to course data button
-        save_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit')
+        save_course = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.edit), label='Edit')
         save_course.SetFont(btnFont)
         save_course.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnEditCourse, save_course)
@@ -1213,13 +1212,13 @@ class CoursePanel(wx.Panel):
         menu = wx.Menu()
 
         new_sub = wx.MenuItem(menu, self.new_id, 'New Subject')
-        new_sub.SetBitmap(wx.Bitmap('add1.png'))
+        new_sub.SetBitmap(wx.Bitmap(IMGS.add))
 
         del_sub = wx.MenuItem(menu, self.remove_id, 'Remove Subject')
-        del_sub.SetBitmap(wx.Bitmap('trashout.png'))
+        del_sub.SetBitmap(wx.Bitmap(IMGS.erase))
 
         edit_sub = wx.MenuItem(menu,self.edit_id, 'Edit Subject Information')
-        edit_sub.SetBitmap(wx.Bitmap('push1.png'))
+        edit_sub.SetBitmap(wx.Bitmap(IMGS.edit))
 
         menu.Append(new_sub)
         menu.Append(del_sub)
@@ -1318,19 +1317,19 @@ class FeePanel(wx.Panel):
         col = wx.Colour('dodgerblue')
         
         # new fee payment button
-        new_payment = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('add1.png'), label='Make Payment')
+        new_payment = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.add), label='Make Payment')
         new_payment.SetFont(btnFont)
         new_payment.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnMakePayment, new_payment)
 
         # erase payment button
-        erase_payment = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Erase Payment')
+        erase_payment = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.erase), label='Erase Payment')
         erase_payment.SetFont(btnFont)
         erase_payment.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnErasePayment, erase_payment)
 
         # save changes made to item info button
-        edit_payment = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit Payment')
+        edit_payment = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.edit), label='Edit Payment')
         edit_payment.SetFont(btnFont)
         edit_payment.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnEditPayment, edit_payment)
@@ -1505,13 +1504,13 @@ class FeePanel(wx.Panel):
         menu = wx.Menu()
 
         new_fee = wx.MenuItem(menu, self.new_id, 'New Payment')
-        new_fee.SetBitmap(wx.Bitmap('add1.png'))
+        new_fee.SetBitmap(wx.Bitmap(IMGS.add))
 
         del_fee = wx.MenuItem(menu, self.remove_id, 'Erase Payment')
-        del_fee.SetBitmap(wx.Bitmap('trashout.png'))
+        del_fee.SetBitmap(wx.Bitmap(IMGS.erase))
 
         edit_fee = wx.MenuItem(menu,self.edit_id, 'Edit Payment Information')
-        edit_fee.SetBitmap(wx.Bitmap('push1.png'))
+        edit_fee.SetBitmap(wx.Bitmap(IMGS.edit))
 
         menu.Append(new_fee)
         menu.Append(del_fee)
@@ -1594,19 +1593,19 @@ class InventoryPanel(wx.Panel):
         # colour for platebuttons 
         col = wx.Colour('dodgerblue')
         # new item button
-        new_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('add1.png'), label='New')
+        new_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.add), label='New')
         new_item.SetFont(btnFont)
         new_item.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnNewItem, new_item)
 
         # remove item button
-        remove_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('trashout.png'), label='Erase')
+        remove_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.erase), label='Erase')
         remove_item.SetFont(btnFont)
         remove_item.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnRemoveItem, remove_item)
 
         # save changes made to item info button
-        save_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap('push1.png'), label='Edit')
+        save_item = pbtn(self, id=wx.ID_ANY, bmp=wx.Bitmap(IMGS.edit), label='Edit')
         save_item.SetFont(btnFont)
         save_item.SetPressColor(col)
         self.Bind(wx.EVT_BUTTON, self.OnEditItem, save_item)
@@ -1793,13 +1792,13 @@ class InventoryPanel(wx.Panel):
         menu = wx.Menu()
 
         new_itm = wx.MenuItem(menu, self.new_id, 'New Student')
-        new_itm.SetBitmap(wx.Bitmap('add1.png'))
+        new_itm.SetBitmap(wx.Bitmap(IMGS.add))
 
         del_itm = wx.MenuItem(menu, self.remove_id, 'Remove Student')
-        del_itm.SetBitmap(wx.Bitmap('trashout.png'))
+        del_itm.SetBitmap(wx.Bitmap(IMGS.erase))
 
         edit_itm = wx.MenuItem(menu,self.edit_id, 'Edit Student Information')
-        edit_itm.SetBitmap(wx.Bitmap('push1.png'))
+        edit_itm.SetBitmap(wx.Bitmap(IMGS.edit))
 
         menu.Append(new_itm)
         menu.Append(del_itm)
@@ -1976,7 +1975,7 @@ class LoginDialog(wx.Dialog):
         wx.Dialog.__init__(self)
         # self.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
         self.Create(parent, id, title, pos, size, style)
-        self.SetIcon(wx.Icon('open.png'))
+        self.SetIcon(wx.Icon(IMGS.unlock))
 
         self.logged_in = False 
         # user info
@@ -2130,17 +2129,13 @@ class AppFrame(wx.Frame):
 
         toolbar = wx.ToolBar(cpl, style=wx.TB_VERTICAL | wx.TB_NODIVIDER)
         icon_size = (30, 30)
-        toolbar.SetToolBitmapSize(icon_size)
-
-        # TODO: Use this tool for student related operations
-        # toolbar.AddTool(20, 'Students', wx.Bitmap('studentsout.png'), shortHelp='Students')
         
-        toolbar.AddTool(60, 'Email', wx.Bitmap('envelopeout.png'), shortHelp='Send a mail.')
-        toolbar.AddTool(50, 'SMS', wx.Bitmap('chatout.png'), shortHelp='Send a text message.')
-        # toolbar.AddTool(70, 'Reports', wx.Bitmap('cvout.png'), shortHelp='Generate Student Reports')
-        toolbar.AddTool(30, 'Settings', wx.Bitmap('usersetout.png'), shortHelp='Edit user related info')
-        toolbar.AddTool(90, 'Log Out', wx.Bitmap('exitout.png'), shortHelp='Sign out of Cranberry')
-        toolbar.AddTool(80, 'Info', wx.Bitmap('help.png'), shortHelp='Program Information')
+        toolbar.AddTool(60, 'Email', wx.Bitmap(IMGS.email), shortHelp='Send a mail.')
+        toolbar.AddTool(50, 'SMS', wx.Bitmap(IMGS.sms), shortHelp='Send a text message.')
+        # toolbar.AddTool(70, 'Reports', wx.Bitmap(IMGS.reports), shortHelp='Generate Student Reports')
+        toolbar.AddTool(30, 'Settings', wx.Bitmap(IMGS.settings), shortHelp='Edit user related info')
+        toolbar.AddTool(90, 'Log Out', wx.Bitmap(IMGS.logout), shortHelp='Sign out of Cranberry')
+        toolbar.AddTool(80, 'Info', wx.Bitmap(IMGS.info), shortHelp='Program Information')
        
         toolbar.SetToolBitmapSize(icon_size)
         toolbar.Realize()
@@ -2165,14 +2160,14 @@ class AppFrame(wx.Frame):
         self.home = HomePanel(nb)
 
         pages = [
-                (self.home, "Home", wx.Bitmap('homeout.png')),
-                (StaffPanel(nb, self.home), "Staff", wx.Bitmap('teacherout.png')),
-                (StudentPanel(nb, self.home), "Student", wx.Bitmap('studentsout.png')),
-                (CoursePanel(nb, self.home), "Subjects", wx.Bitmap('courseout.png')),
-                # (AttendancePanel(nb, self.home), "Attendance", wx.Bitmap('attendanceout.png')),
-                (FeePanel(nb, self.home), "Fees", wx.Bitmap('feesout.png')),
-                (InventoryPanel(nb, self.home), "Inventory", wx.Bitmap('itemsout.png'))#,
-                # (ReportPanel(nb, self.home), "Reports", wx.Bitmap('report_cardout.png'))
+                (self.home, "Home", wx.Bitmap(IMGS.home_icon)),
+                (StaffPanel(nb, self.home), "Staff", wx.Bitmap(IMGS.staff_icon)),
+                (StudentPanel(nb, self.home), "Student", wx.Bitmap(IMGS.student_icon)),
+                (CoursePanel(nb, self.home), "Subjects", wx.Bitmap(IMGS.subject_icon)),
+                # (AttendancePanel(nb, self.home), "Attendance", wx.Bitmap(IMGS.attendance_icon)),
+                (FeePanel(nb, self.home), "Fees", wx.Bitmap(IMGS.fee_icon)),
+                (InventoryPanel(nb, self.home), "Inventory", wx.Bitmap(IMGS.inventory_icon))#,
+                # (ReportPanel(nb, self.home), "Reports", wx.Bitmap(IMGS.report_icon))
             ]
 
         for page, label, bm in pages: nb.AddPage(page, label, bitmap=bm)
@@ -2183,8 +2178,8 @@ class AppFrame(wx.Frame):
         sbox.SetFont(font)
 
         sbox.SetForegroundColour('#333333')
-        search_bmp = wx.Bitmap('search.png')
-        cancel_bmp = wx.Bitmap('cancel.png')
+        search_bmp = wx.Bitmap(IMGS.search)
+        cancel_bmp = wx.Bitmap(IMGS.cancel)
 
         sbox.SetSearchBitmap(search_bmp)
         sbox.SetCancelBitmap(cancel_bmp)
@@ -2230,6 +2225,12 @@ class AppFrame(wx.Frame):
         # self.mgr.SetArtProvider(agw.ModernDockArt(self))
         self.Centre(wx.BOTH)
         self.mgr.Update()
+
+        # Try to send all unsent sms
+        # self.send_all_unsent_sms()
+        
+        # Try to send all unsent emails 
+        # self.send_all_unsent_emails()
 
         # If no user accounts exist then create one
         self.OnLogin()
@@ -2296,7 +2297,6 @@ class AppFrame(wx.Frame):
 
         wx.App.SetMacExitMenuItemId(9123)
         exitapp = wx.MenuItem(menu, 9123, '&Exit\tCtrl-Q', 'Close the Cranberry App', wx.ITEM_NORMAL)
-        # exit.SetBitmap(wx.Bitmap('home.png'))
         menu.Append(exitapp)
         self.Bind(wx.EVT_MENU, self.closedialogs, exitapp)
         self.menubar.Append(menu, '&File')
@@ -2333,9 +2333,9 @@ class AppFrame(wx.Frame):
         fgcol = 'white'
 
         menu_items = [
-            [self.new_id, 'Create new user', 'newuser.png'],
-            [self.remove_id, 'Remove a user', 'remuser.png'], 
-            [self.edit_id, 'Edit user login', 'edit_profileout.png']
+            [self.new_id, 'Create new user', IMGS.new_user],
+            [self.remove_id, 'Remove a user', IMGS.remove_user], 
+            [self.edit_id, 'Edit user login', IMGS.edit_user]
         ]
         
         for item in menu_items:
@@ -2475,8 +2475,8 @@ class AppFrame(wx.Frame):
             receiver = dialog.receipient.GetValue()
             body = dialog.body.GetValue()
         
-            sender = Controller.TextMessenger()
-            sender.send(receiver, body)
+            sender = Controller.TextMessenger(receiver, body)
+            sender.send()
             notify = adv.NotificationMessage(
                 title="Text Message",
                 message="Text message sent to \n%s" % receiver,
@@ -2567,8 +2567,8 @@ class AppFrame(wx.Frame):
         fgcol = 'white'
 
         menu_items = [
-            [self.help_id, 'Help', 'man.png'],
-            [self.about_id, 'About Cranberry', 'info1.png']
+            [self.help_id, 'Help', IMGS.help],
+            [self.about_id, 'About Cranberry', IMGS.about]
         ]
         
         for item in menu_items:
@@ -2604,7 +2604,7 @@ class AppFrame(wx.Frame):
 
 class CranberryInitScreen(adv.SplashScreen):
     def __init__(self):
-        bmp = wx.Bitmap('cr3.png')
+        bmp = wx.Bitmap(IMGS.splash)
         adv.SplashScreen.__init__(self, bmp, adv.SPLASH_CENTRE_ON_SCREEN | adv.SPLASH_TIMEOUT, 5000, None, -1)
         self._msg = wx.StaticText(self)
         self.CreateStatusBar()
