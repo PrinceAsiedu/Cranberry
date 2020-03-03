@@ -1,6 +1,6 @@
 # cranberry_logic.py
 # Author : Prince O. Asiedu
-# Date: February, 2020
+# Date: March, 2020
 
 import os
 import wx
@@ -20,8 +20,15 @@ from cranerror import AuthenticationError
 
 HASH_WORK_FACTOR = 15
 MAIL_TEMPLATE = 'data/mailtemplate.txt'
+
+# Load some presets from the enviroment variables
+TWILIO_ACCOUNT_SID = 'AC41b6d0053f937ecaf0eaf4557db45a8f' # os.environ.get('TWILIO_ACCOUNT_SID') # Account Subscriber ID
+TWILIO_AUTH_TOKEN = '41518d4bfa7c8ea73f768ae29d04b42f' # os.environ.get('TWILIO_AUTH_TOKEN') # Authentication Token
+TWILIO_NUMBER = '+19384440798' # os.environ.get('TWILIO_NUMBER') Twilio account number
+
 LOG_FILE = 'data/app_log.txt'
 LOG = Logger(LOG_FILE)
+
 
 class Images():
 	'''
@@ -43,10 +50,12 @@ class Images():
 		self.splash = d+'cr3.png'
 
 		# Toolbar Menu images
+		self.menu_icon = d+'menuout.png'
+		self.menu_drop = d+'menu_drop.png'
 		self.email = d+'envelopeout.png'
 		self.sms = d+'chatout.png'
 		self.reports = d+'cvout.png'
-		self.settings = d+'usersetout.png'
+		self.settings = d+'settings.png'
 		self.logout = d+'exitout.png'
 		self.info = d+'help.png'
 
@@ -488,10 +497,10 @@ class Calendar():
 		pass
 
 
-class TextMessenger:
+class TextMessenger():
 	
-	def __init__(self, rec, message):
-		self.receipient = rec
+	def __init__(self, rec='', message=''):
+		self.recipient = rec
 		self.msg = message
 		self.sent = False
 
@@ -500,23 +509,24 @@ class TextMessenger:
 		
 		if _check_for_connection is True:
 			try:
-				# Load some presets from the enviroment variables
-				acctSID = 'AC41b6d0053f937ecaf0eaf4557db45a8f' # os.environ.get('TWILIO_ACCOUNT_SID') # Account Subscriber ID
-				authToken =  '41518d4bfa7c8ea73f768ae29d04b42f' # os.environ.get('TWILIO_AUTH_TOKEN') # Authentication Token
-				twilioNum = '+19384440798' # Twilio account number
-				client = sms_client(acctSID, authToken)
-				message = client.messages.create(body=self.msg, from_=twilioNum, to=self.receipient)
+				client = sms_client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+				message = client.messages.create(
+					body=self.msg, 
+					from_=TWILIO_NUMBER, 
+					to=self.recipient
+				)
 
 				# Save the message in the database after sending.
 				time = datetime.now()
 				self.sent = True
 				self.save_msg(self.sent, time)
 				
+				# log message sent event in log file
 				msg = 'Text message sent'
 				LOG.info(msg, time)
 			
 			except Exception as error:
-				msg = 'Text message not sent [%s]' % error
+				msg = 'Text message not sent \n\t[%s]' % error
 				time = datetime.now()
 				LOG.error(msg, time)
 				self.save_msg(self.sent, time)
@@ -528,11 +538,37 @@ class TextMessenger:
 			self.save_msg(self.sent, time)
 	
 	def save_msg(self, status, time):
-		msg = model.SMS_Session(self.receipient, self.msg, status, time)
+		msg = model.Sms_Session(self.recipient, self.msg, status, time)
 		msg.create_msg()
 
-	def send_unsent(self):pass
-	
+	def send_unsent_sms(self):
+		msgs = model.Sms_Session().get_all_msgs()
+
+		if _check_for_connection is True:
+			for m in msgs:
+				if m.status is False:
+					try:
+						msg = m.message
+						rec = m.recipient
+						client = sms_client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+						message = client.messages.create(
+							body=msg, 
+							from_=TWILIO_NUMBER, 
+							to=rec
+						)
+						time=datetime.now()
+						msg = model.Sms_Session()
+						msg.update_msg(m.mid, status=True, time=time)
+					
+					except Exception as error:
+						time=datetime.now()
+						msg = 'Could not resend unsent message\n\t[%s]' % str(error)
+						LOG.error(msg, time)
+				else: 
+					continue
+		
+		else:pass
+
 	def total_sent_and_unsent(self):pass
 
 
@@ -607,17 +643,8 @@ def _check_for_connection():
 		return flag
 
 def main():
-	msg = model.SMS_Session().get_all_msgs()
-	sent = 0
-	unsent = 0
-	for m in msg:
-		if m.status is True:
-			sent += 1
-		else: 
-			unsent += 1
 	
-	s = 'Sent   : {}\nUnsent : {}'.format(sent, unsent)
-	print(s)
+	pass
 
 if __name__ == '__main__':
 	main() 

@@ -11,7 +11,7 @@
 
 software        = 'cranberry_ui.py'
 __version__     = "1.3"
-__date__        = "February, 2020"
+__date__        = "March, 2020"
 __author__      = "Prince Oforh Asiedu"
 __email__       = "prince14asiedu@gmail.com"
 __copyright__   = "(c) Prince Oforh Asiedu 2020"
@@ -44,6 +44,9 @@ PRINTABLE  = 4
 IMGS = Controller.Images()
 
 APP_ICON = IMGS.icon
+
+MENU_BG = 'grey20'
+MENU_FG = 'white'
 
 class TextCtrlValidator(wx.Validator):
     """ This validator is used to ensure that the user has entered 
@@ -411,7 +414,7 @@ class StaffPanel(wx.Panel):
         super(StaffPanel, self).__init__(parent=parent, id=wx.ID_ANY)
         self.Bind(dv.EVT_DATAVIEW_ITEM_CONTEXT_MENU, self.OnContextMenu)
         self.home = home
-        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())     
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold().Italic())     
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.dvlc = dv.DataViewListCtrl(self, style=wx.BORDER_THEME
@@ -627,18 +630,24 @@ class StaffPanel(wx.Panel):
 
         menu = wx.Menu()
 
-        new_wrk = wx.MenuItem(menu, self.new_id, 'New Employee')
-        new_wrk.SetBitmap(wx.Bitmap(IMGS.add))
+        staff = Controller.Staff().staff_total()
 
-        del_wrk = wx.MenuItem(menu, self.remove_id, 'Remove Employee')
-        del_wrk.SetBitmap(wx.Bitmap(IMGS.erase))
+        menu_items = [
+            [self.new_id, 'New Employee', IMGS.add],
+            [self.remove_id, 'Remove Employee', IMGS.erase], 
+            [self.edit_id, 'Edit Employee Information', IMGS.edit]
+        ]
+        
+        for item in menu_items:
+            mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
+            mi.SetBitmap(wx.Bitmap(item[2]))
+            mi.SetBackgroundColour(MENU_BG)
+            mi.SetTextColour(MENU_FG)
+            menu.Append(mi)
 
-        edit_wrk = wx.MenuItem(menu,self.edit_id, 'Edit Employee Details')
-        edit_wrk.SetBitmap(wx.Bitmap(IMGS.edit))
-
-        menu.Append(new_wrk)
-        menu.Append(del_wrk)
-        menu.Append(edit_wrk)
+        if staff == 0: 
+            menu.Enable(self.remove_id, False)
+            menu.Enable(self.edit_id, False)
 
         self.PopupMenu(menu)
         menu.Destroy()
@@ -705,7 +714,7 @@ class StudentPanel(wx.Panel):
         self.Bind(dv.EVT_DATAVIEW_ITEM_CONTEXT_MENU, self.OnContextMenu)
 
         self.home = home
-        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold().Italic())
 
         # All other sizers and controls will be put into the self.main_sizer
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -948,19 +957,25 @@ class StudentPanel(wx.Panel):
             self.Bind(wx.EVT_MENU, self.OnEditStudent, id=self.edit_id)
 
         menu = wx.Menu()
-           
-        new_stu = wx.MenuItem(menu, self.new_id, 'New Student')
-        new_stu.SetBitmap(wx.Bitmap(IMGS.add))
 
-        del_stu = wx.MenuItem(menu, self.remove_id, 'Remove Student')
-        del_stu.SetBitmap(wx.Bitmap(IMGS.erase))
+        students = Controller.Student().student_total()
 
-        edit_stu = wx.MenuItem(menu,self.edit_id, 'Edit Student Information')
-        edit_stu.SetBitmap(wx.Bitmap(IMGS.edit))
+        menu_items = [
+            [self.new_id, 'New Student', IMGS.add],
+            [self.remove_id, 'Remove Student', IMGS.erase], 
+            [self.edit_id, 'Edit Student Information', IMGS.edit]
+        ]
+        
+        for item in menu_items:
+            mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
+            mi.SetBitmap(wx.Bitmap(item[2]))
+            mi.SetBackgroundColour(MENU_BG)
+            mi.SetTextColour(MENU_FG)
+            menu.Append(mi)
 
-        menu.Append(new_stu)
-        menu.Append(del_stu)
-        menu.Append(edit_stu)
+        if students == 0: 
+            menu.Enable(self.remove_id, False)
+            menu.Enable(self.edit_id, False)
 
         self.PopupMenu(menu)
         menu.Destroy()
@@ -1004,7 +1019,7 @@ class CoursePanel(wx.Panel):
         self.Bind(dv.EVT_DATAVIEW_ITEM_CONTEXT_MENU, self.OnContextMenu)
 
         self.home = home
-        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold().Italic())
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -1211,18 +1226,25 @@ class CoursePanel(wx.Panel):
 
         menu = wx.Menu()
 
-        new_sub = wx.MenuItem(menu, self.new_id, 'New Subject')
-        new_sub.SetBitmap(wx.Bitmap(IMGS.add))
 
-        del_sub = wx.MenuItem(menu, self.remove_id, 'Remove Subject')
-        del_sub.SetBitmap(wx.Bitmap(IMGS.erase))
+        subjects = Controller.Courses().course_total()
 
-        edit_sub = wx.MenuItem(menu,self.edit_id, 'Edit Subject Information')
-        edit_sub.SetBitmap(wx.Bitmap(IMGS.edit))
+        menu_items = [
+            [self.new_id, 'New Subject', IMGS.add],
+            [self.remove_id, 'Remove Subject', IMGS.erase], 
+            [self.edit_id, 'Edit Subject Information', IMGS.edit]
+        ]
+        
+        for item in menu_items:
+            mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
+            mi.SetBitmap(wx.Bitmap(item[2]))
+            mi.SetBackgroundColour(MENU_BG)
+            mi.SetTextColour(MENU_FG)
+            menu.Append(mi)
 
-        menu.Append(new_sub)
-        menu.Append(del_sub)
-        menu.Append(edit_sub)
+        if subjects == 0: 
+            menu.Enable(self.remove_id, False)
+            menu.Enable(self.edit_id, False)
 
         self.PopupMenu(menu)
         menu.Destroy()
@@ -1283,7 +1305,7 @@ class FeePanel(wx.Panel):
         self.Bind(dv.EVT_DATAVIEW_ITEM_CONTEXT_MENU, self.OnContextMenu)
 
         self.home = home
-        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold().Italic())
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.dvlc = dv.DataViewListCtrl(self, style=wx.BORDER_THEME
@@ -1503,18 +1525,25 @@ class FeePanel(wx.Panel):
 
         menu = wx.Menu()
 
-        new_fee = wx.MenuItem(menu, self.new_id, 'New Payment')
-        new_fee.SetBitmap(wx.Bitmap(IMGS.add))
+        fees = Controller.Fees()
+        fees = len(fees.all_fees())
 
-        del_fee = wx.MenuItem(menu, self.remove_id, 'Erase Payment')
-        del_fee.SetBitmap(wx.Bitmap(IMGS.erase))
+        menu_items = [
+            [self.new_id, 'New Payment', IMGS.add],
+            [self.remove_id, 'Erase Payment', IMGS.erase], 
+            [self.edit_id, 'Edit Payment Information', IMGS.edit]
+        ]
+        
+        for item in menu_items:
+            mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
+            mi.SetBitmap(wx.Bitmap(item[2]))
+            mi.SetBackgroundColour(MENU_BG)
+            mi.SetTextColour(MENU_FG)
+            menu.Append(mi)
 
-        edit_fee = wx.MenuItem(menu,self.edit_id, 'Edit Payment Information')
-        edit_fee.SetBitmap(wx.Bitmap(IMGS.edit))
-
-        menu.Append(new_fee)
-        menu.Append(del_fee)
-        menu.Append(edit_fee)
+        if fees == 0: 
+            menu.Enable(self.remove_id, False)
+            menu.Enable(self.edit_id, False)
 
         self.PopupMenu(menu)
         menu.Destroy()
@@ -1562,7 +1591,7 @@ class InventoryPanel(wx.Panel):
         self.Bind(dv.EVT_DATAVIEW_ITEM_CONTEXT_MENU, self.OnContextMenu)
 
         self.home = home
-        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold())
+        btnFont = wx.Font(wx.FontInfo(10).FaceName('Candara').Bold().Italic())
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.dvlc = dv.DataViewListCtrl(self, style=wx.BORDER_THEME
@@ -1791,18 +1820,25 @@ class InventoryPanel(wx.Panel):
 
         menu = wx.Menu()
 
-        new_itm = wx.MenuItem(menu, self.new_id, 'New Student')
-        new_itm.SetBitmap(wx.Bitmap(IMGS.add))
+        items = Controller.Inventory()
+        items = items.item_total()
 
-        del_itm = wx.MenuItem(menu, self.remove_id, 'Remove Student')
-        del_itm.SetBitmap(wx.Bitmap(IMGS.erase))
+        menu_items = [
+            [self.new_id, 'Create new student', IMGS.add],
+            [self.remove_id, 'Remove student', IMGS.erase], 
+            [self.edit_id, 'Edit Student Information', IMGS.edit]
+        ]
+        
+        for item in menu_items:
+            mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
+            mi.SetBitmap(wx.Bitmap(item[2]))
+            mi.SetBackgroundColour(MENU_BG)
+            mi.SetTextColour(MENU_FG)
+            menu.Append(mi)
 
-        edit_itm = wx.MenuItem(menu,self.edit_id, 'Edit Student Information')
-        edit_itm.SetBitmap(wx.Bitmap(IMGS.edit))
-
-        menu.Append(new_itm)
-        menu.Append(del_itm)
-        menu.Append(edit_itm)
+        if items == 0: 
+            menu.Enable(self.remove_id, False)
+            menu.Enable(self.edit_id, False)
 
         self.PopupMenu(menu)
         menu.Destroy()
@@ -1918,10 +1954,10 @@ class SmsPad(sc.SizedDialog):
 
         rec_lbl = wx.StaticText(pane, -1, 'Reciepient\'s phone number')
         # rec_lbl.SetFont(font)
-        self.receipient = wx.TextCtrl(pane, -1, value="", style=wx.TE_PROCESS_ENTER)
-        self.receipient.SetFocus()
-        self.receipient.SetSizerProps(expand=True)
-        # self.receipient.SetFont(font)
+        self.recipient = wx.TextCtrl(pane, -1, value="", style=wx.TE_PROCESS_ENTER)
+        self.recipient.SetFocus()
+        self.recipient.SetSizerProps(expand=True)
+        # self.recipient.SetFont(font)
 
         bd_lbl = wx.StaticText(pane, -1, 'Message Body')
         # bd_lbl.SetFont(font)
@@ -1948,10 +1984,10 @@ class MailPad(sc.SizedDialog):
         rec_lbl = wx.StaticText(pane, -1, 'Reciepient\' email address')
         # rec_lbl.SetFont(font)
 
-        self.receipient = wx.TextCtrl(pane, -1, value="", style=wx.TE_PROCESS_ENTER)
-        self.receipient.SetFocus()
-        self.receipient.SetSizerProps(expand=True)
-        self.receipient.SetFont(font)
+        self.recipient = wx.TextCtrl(pane, -1, value="", style=wx.TE_PROCESS_ENTER)
+        self.recipient.SetFocus()
+        self.recipient.SetSizerProps(expand=True)
+        self.recipient.SetFont(font)
 
         sub_lbl = wx.StaticText(pane, -1, 'Subject')
         sub_lbl.SetFont(font)
@@ -2129,26 +2165,16 @@ class AppFrame(wx.Frame):
 
         # self.BuildMenuBar()
 
-        toolbar = wx.ToolBar(cpl, style=wx.TB_VERTICAL | wx.TB_NODIVIDER)
+        self.toolbar = wx.ToolBar(cpl, style=wx.TB_VERTICAL | wx.TB_NODIVIDER)
         icon_size = (30, 30)
         
-        toolbar.AddTool(60, 'Email', wx.Bitmap(IMGS.email), shortHelp='Send a mail.')
-        toolbar.AddTool(50, 'SMS', wx.Bitmap(IMGS.sms), shortHelp='Send a text message.')
-        # toolbar.AddTool(70, 'Reports', wx.Bitmap(IMGS.reports), shortHelp='Generate Student Reports')
-        toolbar.AddTool(30, 'Settings', wx.Bitmap(IMGS.settings), shortHelp='Edit user related info')
-        toolbar.AddTool(90, 'Log Out', wx.Bitmap(IMGS.logout), shortHelp='Sign out of Cranberry')
-        toolbar.AddTool(80, 'Info', wx.Bitmap(IMGS.info), shortHelp='Program Information')
+        self.toolbar.AddTool(60, 'Menu', wx.Bitmap(IMGS.menu_drop), shortHelp='Menu')
        
-        toolbar.SetToolBitmapSize(icon_size)
-        toolbar.Realize()
-
         # Bind some event handlers to toolbar
-        self.Bind(wx.EVT_TOOL, self.OnSettings, id=30)
-        self.Bind(wx.EVT_TOOL, self.OnSms, id=50)
-        self.Bind(wx.EVT_TOOL, self.OnMail, id=60)
-        self.Bind(wx.EVT_TOOL, self.OnInfo, id=80)
-        self.Bind(wx.EVT_TOOL, self.OnLogout, id=90)
-        #self.Bind(wx.EVT_TOOL, func, id=70)
+        # self.Bind(wx.EVT_TOOL, self.OnToolBarMenu, id=60)
+        # self.Bind(wx.EVT_TOOL_DROPDOWN, self.OnToolBarMenu, id=60)
+        self.toolbar.SetToolBitmapSize(icon_size)
+        self.toolbar.Realize()
 
         tab_style = (wx.lib.agw.aui.auibook.AUI_NB_SMART_TABS 
                     | wx.lib.agw.aui.auibook.AUI_NB_NO_TAB_FOCUS
@@ -2193,7 +2219,7 @@ class AppFrame(wx.Frame):
         self.cal = cal = adv.CalendarCtrl(rpnl, -1, date=wx.DefaultDateTime, style=adv.CAL_SHOW_HOLIDAYS)
 
         lbox = wx.BoxSizer(wx.HORIZONTAL)
-        lbox.Add(toolbar, 0, wx.EXPAND)
+        lbox.Add(self.toolbar, 0, wx.EXPAND)
         lbox.Add(nb, 1, wx.EXPAND)
         cpl.SetSizer(lbox)
 
@@ -2229,7 +2255,7 @@ class AppFrame(wx.Frame):
         self.mgr.Update()
 
         # Try to send all unsent sms
-        # self.send_all_unsent_sms()
+        Controller.TextMessenger().send_unsent_sms()
         
         # Try to send all unsent emails 
         # self.send_all_unsent_emails()
@@ -2290,28 +2316,52 @@ class AppFrame(wx.Frame):
         
         else:pass
 
-    def BuildMenuBar(self):
-        # Main Menu
-        self.menubar = wx.MenuBar()
+    def OnToolBarMenu(self, event):
 
-        # Build a file menu
+        if not hasattr(self, 'new_id'):
+            self.sms_id = wx.NewIdRef()
+            self.settings_id = wx.NewIdRef()
+            self.logout_id = wx.NewIdRef()  
+            self.info_id = wx.NewIdRef()
+
+            # self.Bind(wx.EVT_MENU, self.OnNewItem, id=self.new_id) 
+            # self.Bind(wx.EVT_MENU, self.OnRemoveItem, id=self.remove_id)
+            # self.Bind(wx.EVT_MENU, self.OnEditItem, id=self.edit_id)
+
+            # toolbar.AddTool(50, , wx.Bitmap(), shortHelp='.')
+            # toolbar.AddTool(70, 'Reports', wx.Bitmap(IMGS.reports), shortHelp='Generate Student Reports')
+            # toolbar.AddTool(30, , wx.Bitmap(IMGS.settings), shortHelp='')
+            # toolbar.AddTool(90, , wx.Bitmap(IMGS.logout), shortHelp='')
+            # toolbar.AddTool(80, 'Info', wx.Bitmap(), shortHelp='')
+
         menu = wx.Menu()
 
-        wx.App.SetMacExitMenuItemId(9123)
-        exitapp = wx.MenuItem(menu, 9123, '&Exit\tCtrl-Q', 'Close the Cranberry App', wx.ITEM_NORMAL)
-        menu.Append(exitapp)
-        self.Bind(wx.EVT_MENU, self.closedialogs, exitapp)
-        self.menubar.Append(menu, '&File')
+        menu_items = [
+            [self.sms_id, 'Send a text message', IMGS.sms],
+            [self.settings_id, 'Edit user information', IMGS.settings], 
+            [self.logout_id, 'Log out of Cranberry', IMGS.logout],
+            [self.info_id, 'Program Information', IMGS.info]
+        ]
+        
+        for item in menu_items:
+            mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
+            mi.SetBitmap(wx.Bitmap(item[2]))
+            mi.SetBackgroundColour(MENU_BG)
+            mi.SetTextColour(MENU_FG)
+            menu.Append(mi)
 
-        # Build a help menu
-        menu = wx.Menu()
-        about = wx.MenuItem(menu, -1, '&About', 'About the Cranberry App', wx.ITEM_NORMAL)
-        # Remember to set a bitmap for this menu item
-        menu.Append(about)
-        self.Bind(wx.EVT_MENU, self.OnAboutApp, about)
-        self.menubar.Append(menu, '&Help')
-        self.SetMenuBar(self.menubar)
-    
+        # if items == 0: 
+        #     menu.Enable(self.remove_id, False)
+        #     menu.Enable(self.edit_id, False)
+
+        drop_icon = wx.Bitmap(IMGS.menu_drop)
+        menu_icon = wx.Bitmap(IMGS.menu_icon)
+
+        self.toolbar.SetToolNormalBitmap(60, menu_icon)
+        self.PopupMenu(menu)
+        menu.Destroy()
+        self.toolbar.SetToolNormalBitmap(60, drop_icon)
+        
     def OnSearch(self, event):
         search = Controller.Search().search
         searchword = self.searchBox.GetValue()
@@ -2331,9 +2381,6 @@ class AppFrame(wx.Frame):
 
         menu = wx.Menu()
 
-        bgcol = 'grey30'
-        fgcol = 'white'
-
         menu_items = [
             [self.new_id, 'Create new user', IMGS.new_user],
             [self.remove_id, 'Remove a user', IMGS.remove_user], 
@@ -2343,8 +2390,8 @@ class AppFrame(wx.Frame):
         for item in menu_items:
             mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
             mi.SetBitmap(wx.Bitmap(item[2]))
-            mi.SetBackgroundColour(bgcol)
-            mi.SetTextColour(fgcol)
+            mi.SetBackgroundColour(MENU_BG)
+            mi.SetTextColour(MENU_FG)
             menu.Append(mi)
 
         if self.users <= 1: menu.Enable(self.remove_id, False)
@@ -2474,7 +2521,7 @@ class AppFrame(wx.Frame):
     def SendSms(self, dialog):
 
         try:
-            receiver = dialog.receipient.GetValue()
+            receiver = dialog.recipient.GetValue()
             body = dialog.body.GetValue()
         
             sender = Controller.TextMessenger(receiver, body)
@@ -2505,7 +2552,7 @@ class AppFrame(wx.Frame):
     def SendMail(self, dialog):
         try:
             subject = dialog.subject.GetValue()
-            receiver = dialog.receipient.GetValue()
+            receiver = dialog.recipient.GetValue()
             body = dialog.body.GetValue()
             attachments = []
             file = dialog.attach.GetValue()
@@ -2565,8 +2612,6 @@ class AppFrame(wx.Frame):
 
         menu = wx.Menu()
 
-        bgcol = 'grey30'
-        fgcol = 'white'
 
         menu_items = [
             [self.help_id, 'Help', IMGS.help],
@@ -2576,8 +2621,8 @@ class AppFrame(wx.Frame):
         for item in menu_items:
             mi = wx.MenuItem(menu, id=item[0], text=item[1]) # mi is menu_item
             mi.SetBitmap(wx.Bitmap(item[2]))
-            mi.SetBackgroundColour(bgcol)
-            mi.SetTextColour(fgcol)
+            mi.SetBackgroundColour(MENU_BG)
+            mi.SetTextColour(MENU_FG)
             menu.Append(mi)
 
         self.PopupMenu(menu)

@@ -34,4 +34,3 @@ class NoSearchResult(Exception):
 
 class NoInternetConnection(CranError):
 	'''No internet connection established'''
-	

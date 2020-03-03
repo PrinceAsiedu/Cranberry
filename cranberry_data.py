@@ -600,7 +600,7 @@ class TextMessages(Base):
 	time_sent = Column(DateTime, nullable=False)
 
 
-class SMS_Session():
+class Sms_Session():
 
 	def __init__(self, rec='', msg='', sts='', time='', session=__sess__):
 		self.recipient = rec
@@ -643,11 +643,11 @@ class SMS_Session():
 			self.session().rollback()
 			raise error
 
-	def update_msg(self, mid):
+	def update_msg(self, mid, status='', time=''):
 		try:
 			msg = self.get_msg(mid)
-			if self.status: msg.status = self.status
-			
+			if status: msg.status = status
+			if time: msg.time_sent = time			
 			self.session.commit()
 		
 		except Exception as error: self.session.rollback(); raise error

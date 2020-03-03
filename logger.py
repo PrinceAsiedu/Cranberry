@@ -7,6 +7,8 @@ class Logger(object):
         this logger will write its message
         """
     
+    # TODO: Rewrite Logger methods to create timestamp when logging
+    
     def __init__(self, file_name):
         """Return a logger object whose file_name is *file_name*"""
         self.file_name = file_name
