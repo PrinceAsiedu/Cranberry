@@ -21,10 +21,14 @@ from cranerror import AuthenticationError
 HASH_WORK_FACTOR = 15
 MAIL_TEMPLATE = 'data/mailtemplate.txt'
 
+os.system('')
 # Load some presets from the enviroment variables
-TWILIO_ACCOUNT_SID = 'AC41b6d0053f937ecaf0eaf4557db45a8f' # os.environ.get('TWILIO_ACCOUNT_SID') # Account Subscriber ID
-TWILIO_AUTH_TOKEN = '41518d4bfa7c8ea73f768ae29d04b42f' # os.environ.get('TWILIO_AUTH_TOKEN') # Authentication Token
-TWILIO_NUMBER = '+19384440798' # os.environ.get('TWILIO_NUMBER') Twilio account number
+
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+TWILIO_ACCOUNT_SID =  os.environ.get('TWILIO_ACCOUNT_SID') # Account Subscriber ID
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN') # Authentication Token
+TWILIO_NUMBER =  os.environ.get('TWILIO_NUMBER') # Twilio account number
+EMAIL_ADDR = os.environ.get('EMAIL_ADDR')
 
 LOG_FILE = 'data/app_log.txt'
 LOG = Logger(LOG_FILE)
@@ -109,7 +113,7 @@ class Images():
 				
 
 class Student():
-	def __init__(self, fname='', lname='',sex='',bd='',parent='',num='',mail='',addr='',lvl='', ste='',adate=''):
+	def __init__(self, fname=None, lname=None,sex=None,bd=None,parent=None,num=None,mail=None,addr=None,lvl=None, ste=None,adate=None):
 		
 		self.fname = fname
 		self.lname = lname
@@ -160,8 +164,8 @@ class Student():
 		try: result = self.session().remove_a_student(sid)
 		except Exception as error: raise error
 	
-	def edit_student_data(self, sid, fname='',lname='',sex='',bd='',parent='',
-				phone='',email='',addr='',lvl='', ste='',adate=''):
+	def edit_student_data(self, sid, fname=None,lname=None,sex=None,bd=None,parent=None,
+				phone=None,email=None,addr=None,lvl=None, ste=None,adate=None):
 		try: 
 			if not bd == '':
 				bd = wxdate2pydate(bd) # date of birth
@@ -180,7 +184,7 @@ class Student():
 
 
 class Staff():
-	def __init__(self, fn='', ln='', sx='', nm='', em='', ad='', hd='', lv='', sy=''):
+	def __init__(self, fn=None, ln=None, sx=None, nm=None, em=None, ad=None, hd=None, lv=None, sy=None):
 		
 		self.fname = fn
 		self.lname = ln
@@ -225,7 +229,7 @@ class Staff():
 		try: result = self.session().remove_worker(wid)
 		except Exception as error: raise error
 
-	def edit_worker(self, wid, fn='', ln='', sx='', nm='', em='', ad='', hd='', lv='', sy=''):
+	def edit_worker(self, wid, fn=None, ln=None, sx=None, nm=None, em=None, ad=None, hd=None, lv=None, sy=None):
 		try: 
 			if not hd == '':
 				hd = wxdate2pydate(hd)
@@ -240,7 +244,7 @@ class Staff():
 
 
 class Courses():
-	def __init__(self, name='', teacher='', duration='', level='', price='', status=''):
+	def __init__(self, name=None, teacher=None, duration=None, level=None, price=None, status=None):
 
 		self.name = name 
 		self.teacher = teacher
@@ -277,7 +281,7 @@ class Courses():
 		except Exception as error: raise error
 		finally: return courses		
 
-	def edit_course(self, cid, name='', teacher='', duration='', level='', price='', status=''):
+	def edit_course(self, cid, name=None, teacher=None, duration=None, level=None, price=None, status=None):
 		try:
 			course = self.session()
 			course.modify_course_info(cid, name, teacher, duration, level, price, status)
@@ -294,7 +298,7 @@ class Courses():
 
 
 class Inventory():
-	def __init__(self, name='',desc='',qty='',state='', cost='', total='', discount='', date=''):
+	def __init__(self, name=None,desc=None,qty=None,state=None, cost=None, total=None, discount=None, date=None):
 
 		self.name = name
 		self.description = desc
@@ -359,7 +363,7 @@ class Inventory():
 
 class Fees():
 
-	def __init__(self, amt='',pyr='',rcv='',ars='',flp='',dtp=''):
+	def __init__(self, amt=None,pyr=None,rcv=None,ars=None,flp=None,dtp=None):
 
 		self.amount = amt
 		self.payer = pyr
@@ -499,8 +503,8 @@ class Calendar():
 
 class TextMessenger():
 	
-	def __init__(self, rec='', message=''):
-		self.recipient = rec
+	def __init__(self, rec=None, message=None):
+		self.__recipient = rec
 		self.msg = message
 		self.sent = False
 
@@ -513,13 +517,13 @@ class TextMessenger():
 				message = client.messages.create(
 					body=self.msg, 
 					from_=TWILIO_NUMBER, 
-					to=self.recipient
+					to=self.__recipient
 				)
 
 				# Save the message in the database after sending.
 				time = datetime.now()
 				self.sent = True
-				self.save_msg(self.sent, time)
+				save_msg(self.__recipient, self.msg, self.sent, time)
 				
 				# log message sent event in log file
 				msg = 'Text message sent'
@@ -529,89 +533,71 @@ class TextMessenger():
 				msg = 'Text message not sent \n\t[%s]' % error
 				time = datetime.now()
 				LOG.error(msg, time)
-				self.save_msg(self.sent, time)
+				self.save_msg(self.__recipient, self.msg, self.sent, time)
 		
 		else: 
 			msg = 'Text message not sent [Failed to establish internet connection]' 
 			time = datetime.now()
 			LOG.warn(msg, time)
 			self.save_msg(self.sent, time)
-	
-	def save_msg(self, status, time):
-		msg = model.Sms_Session(self.recipient, self.msg, status, time)
-		msg.create_msg()
-
-	def send_unsent_sms(self):
-		msgs = model.Sms_Session().get_all_msgs()
-
-		if _check_for_connection is True:
-			for m in msgs:
-				if m.status is False:
-					try:
-						msg = m.message
-						rec = m.recipient
-						client = sms_client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-						message = client.messages.create(
-							body=msg, 
-							from_=TWILIO_NUMBER, 
-							to=rec
-						)
-						time=datetime.now()
-						msg = model.Sms_Session()
-						msg.update_msg(m.mid, status=True, time=time)
-					
-					except Exception as error:
-						time=datetime.now()
-						msg = 'Could not resend unsent message\n\t[%s]' % str(error)
-						LOG.error(msg, time)
-				else: 
-					continue
-		
-		else:pass
-
-	def total_sent_and_unsent(self):pass
 
 
-class MailSender():
+class MailMessenger():
 
-	def __init__(self, receiver, subject, msg_body, attachments=''):
+	def __init__(self, receiver, subject, msg_body, attachments=None):
 	
 		self.subject = subject
-		self._receiver = receiver
+		self.__recipient = receiver
 		self.body = msg_body
-		self._from = 'prince14asiedu@gmail.com'
-		# self.attachments = attachments
-		
-		# Create an html message template
-		mode = 'r'
-		html = open(MAIL_TEMPLATE, mode)
-		text = html.read()
-		html.close()
+		self._from = EMAIL_ADDR
+		self.sent = False
 
-		self.msg_temp = text.format(subject=self.subject,body=self.body)
+		# TODO: Try to add attachments if necessary
+		# Write code to do that. 
+		# self.attachments = attachments
+
+		html = make_msg(subject=self.subject, body=self.body)
 		
 		msg = Mail(
 			from_email=self._from,
-			to_emails=self._receiver,
+			to_emails=self.__recipient,
 			subject=self.subject,
-			html_content=self.msg_temp
+			html_content=html
 		)
 		self.__send_mail(msg)
 
-
 	def __send_mail(self, message):
 		try:
-			API_SECRET = os.environ.get('SENDGRID_API_KEY')
-			sg = SendGridAPIClient(API_SECRET)
+			sg = SendGridAPIClient(SENDGRID_API_KEY)
 			response = sg.send(message)
 			# print(response.status_code)
 			# print(response.body)
 			# print(response.headers)	
 		
+			# Save the mail in the database after sending.
+			time = datetime.now()
+			self.sent = True
+			save_msg(self.__recipient, self.msg, self.sent, time)
+			
+			# log message sent event in log file
+			msg = 'Email sent'
+			LOG.info(msg, time)
+		
 		except Exception as error:
-			raise error
-			print(str(error))
+			msg = 'Email not sent \n\t[%s]' % error
+			time = datetime.now()
+			LOG.error(msg, time)
+			self.save_msg(self.__recipient, self.msg, self.sent, time)
 
+
+def make_msg(subject, body):
+	# Create an html message template
+	mode = 'r'
+	text = open(MAIL_TEMPLATE, mode)
+	html = text.read()
+	text.close()
+	html = html.format(subject=subject,body=body) # message template
+	return html
 	
 def hash_password(passw):
 	enc_passw = passw.encode()
@@ -620,7 +606,6 @@ def hash_password(passw):
 	return pwh
 
 def wxdate2pydate(date):
-
 		# Converts wx.DateTime objects to datetime.datetime objects.
 		try:
 			assert isinstance(date, wx.DateTime)
@@ -642,8 +627,65 @@ def _check_for_connection():
 	except Exception as error:
 		return flag
 
-def main():
+def save_msg(rec, msg, status, time):
+	msg = model.MSG_Session(rec, msg, status, time)
+	msg.create_msg()
+
+def send_unsent_messages():
+	"""
+	Send all unsent messages from the db.
+	"""
+	msgs = model.MSG_Session().get_all_msgs()
+
+	if _check_for_connection is True:
+		for m in msgs:
+			if (m.status is False) and (m.mtype == 'sms'):
+				try:
+					msg = m.message
+					rec = m.recipient
+					client = sms_client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+					message = client.messages.create(body=msg, from_=TWILIO_NUMBER, to=rec)
+					time = datetime.now()
+					
+					msg = model.MSG_Session()
+					msg.update_msg(m.mid, status=True, time=time)
+				
+				except Exception as error:
+					time = datetime.now()
+					msg = 'Could not resend unsent message\n\t[%s]' % str(error)
+					LOG.error(msg, time)
+			
+			else:
+				try:
+					msg = m.message
+					rec = m.recipient
+					html = make_msg(msg)
+		
+					msg = Mail(
+						from_email=EMAIL_ADDR,
+						to_emails=rec,
+						html_content=html,
+					)
+					
+					sg = SendGridAPIClient(SENDGRID_API_KEY)
+					sg.send(msg)
+
+					time = datetime.now()
+					logmsg = 'Unsent mail resent.\n\t[%s]' % str(error)
+					LOG.info(logmsg, time)
+
+					msg = model.MSG_Session()
+					msg.update_msg(m.mid, status=True, time=time)
+				
+				except Exception as error:
+					time=datetime.now()
+					msg = 'Could not resend unsent mail\n\t[%s]' % str(error)
+					LOG.error(msg, time)
 	
+	else: pass
+
+def main():
+	# print(send_unsent_messages())
 	pass
 
 if __name__ == '__main__':

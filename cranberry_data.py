@@ -141,7 +141,7 @@ class Staff(Base):
 
 class Staff_Session():
 
-	def __init__(self, fn='', ln='', sx='', nm='', em='', ad='', hd=date, lv='', sy='', session=__sess__):
+	def __init__(self, fn=None, ln=None, sx=None, nm=None, em=None, ad=None, hd=date, lv=None, sy=None, session=__sess__):
 		
 		self.firstname = fn
 		self.lastname = ln
@@ -237,8 +237,8 @@ class Students(Base):
 
 
 class Student_Session():
-	def __init__(self, firstname='',lastname='',gender='', dob=date, guardian='',
-			phone='',email='',address='', level='',stype='',adm_date=date, session=__sess__):
+	def __init__(self, firstname=None,lastname=None,gender=None, dob=date, guardian=None,
+			phone=None,email=None,address=None, level=None,stype=None,adm_date=date, session=__sess__):
 		
 		self.fname = firstname
 		self.lname = lastname
@@ -296,7 +296,7 @@ class Student_Session():
 
 		except Exception as error: raise error
 
-	def edit_student(self, sid, fe='',le='',gr='', bd='',gn='',pe='',el='',ad='',lv='',st='',ae=''):
+	def edit_student(self, sid, fe=None,le=None,gr=None, bd=None,gn=None,pe=None,el=None,ad=None,lv=None,st=None,ae=None):
 		try:
 			student = self.get_a_student(sid)
 
@@ -332,7 +332,7 @@ class Courses(Base):
 
 
 class Courses_Session():
-	def __init__(self, name='',teacher='', duration='', level='', price='', status='', session=__sess__):
+	def __init__(self, name=None,teacher=None, duration=None, level=None, price=None, status=None, session=__sess__):
 
 		self.name = name 
 		self.teacher = teacher
@@ -383,7 +383,7 @@ class Courses_Session():
 
 		except Exception as error: raise error
 
-	def modify_course_info(self, cid, name='', teacher='', duration='', level='', price='' , status=''):
+	def modify_course_info(self, cid, name=None, teacher=None, duration=None, level=None, price=None , status=None):
 		try:
 			course = self.get_a_course(cid)
 	
@@ -418,7 +418,7 @@ class Properties(Base):
 
 class Inventory_Session():
 
-	def __init__(self, n='',d='',q='',s='', c='', tc='', dc='', pd='', session=__sess__):
+	def __init__(self, n=None,d=None,q=None,s=None, c=None, tc=None, dc=None, pd=None, session=__sess__):
 		self.name = n
 		self.description = d
 		self.quantity = q
@@ -512,7 +512,7 @@ class Fees(Base):
 
 class Fee_Session():
 
-	def __init__(self,amt='',pyr='',rcv='',ars='',flp='',dtp='', session=__sess__):
+	def __init__(self,amt=None,pyr=None,rcv=None,ars=None,flp=None,dtp=None, session=__sess__):
 		self.amount = amt
 		self.payer = pyr
 		self.receiver = rcv
@@ -589,34 +589,39 @@ class Fee_Session():
 			raise error
 
 
-class TextMessages(Base):
+class Message(Base):
 	
-	__tablename__ = 'sms'
+	__tablename__ = 'messages'
 
 	mid = Column(Integer, primary_key=True)
 	recipient = Column(String, nullable=False)
 	message =  Column(String, nullable=False)
 	status = Column(Boolean, nullable=False)
 	time_sent = Column(DateTime, nullable=False)
+	mtype = Column(String, nullable=False)
 
 
-class Sms_Session():
-
-	def __init__(self, rec='', msg='', sts='', time='', session=__sess__):
+class MSG_Session():
+	"""
+	Text message and E-mail object
+	"""
+	def __init__(self, rec=None, msg=None, sts=None, time=None, mtype =None, session=__sess__):
 		self.recipient = rec
 		self.message = msg
 		self.status = sts
 		self.time_sent = time
+		self.mtype = mtype
 		
 		self.session = session
 	
 	def create_msg(self):
 		try:
-			new_msg = TextMessages(
+			new_msg = Message(
 				recipient=self.recipient,
 				message=self.message, 
 				status=self.status, 
-				time_sent=self.time_sent
+				time_sent=self.time_sent,
+				mtype = self.mtype
 			)
 
 			self.session.add(new_msg)
@@ -626,11 +631,11 @@ class Sms_Session():
 			raise error
 
 	def get_msg(self, mid):
-		try: msg = self.session.query(TextMessages).get(mid); return msg
+		try: msg = self.session.query(Message).get(mid); return msg
 		except Exception as error: raise error
 
 	def get_all_msgs(self):
-		try: msgs = self.session.query(TextMessages).all(); return msgs
+		try: msgs = self.session.query(Message).all(); return msgs
 		except Exception as error: raise error
 
 	def delete_msg(self, mid):
@@ -643,7 +648,7 @@ class Sms_Session():
 			self.session().rollback()
 			raise error
 
-	def update_msg(self, mid, status='', time=''):
+	def update_msg(self, mid, status=None, time=None):
 		try:
 			msg = self.get_msg(mid)
 			if status: msg.status = status
@@ -653,11 +658,6 @@ class Sms_Session():
 		except Exception as error: self.session.rollback(); raise error
 
 	def total(self): count = len(self.get_all_msgs()); return count
-
-
-# class Emails(Base):
-
-# 	__tablename__ = 'emails'
 
 
 def search(keyword):
@@ -714,7 +714,7 @@ def search(keyword):
 	
 
 def main():
-	# create_db()
+	create_db()
 	pass
 	
 

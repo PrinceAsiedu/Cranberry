@@ -343,11 +343,11 @@ class HomePanel(wx.Panel):
         itm_box.Add(itm_body)
 
         first_horz_box.Add(stu_box, 1, wx.LEFT, 40)
-        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
+        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
         first_horz_box.Add(stf_box, 1, wx.LEFT, 20)
-        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
+        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
         first_horz_box.Add(cse_box, 1, wx.LEFT, 20)  
-        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 1, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)      
+        first_horz_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)      
         first_horz_box.Add(itm_box, 1, wx.LEFT, 20)
     
         stat_box = wx.StaticBox(self, -1, 'School Statistics')
@@ -362,7 +362,6 @@ class HomePanel(wx.Panel):
         border = wx.BoxSizer(wx.HORIZONTAL)
         border.Add(stat_box, 1, wx.ALL, 25)
         
-
         self.SetBackgroundColour('white')
         self.SetSizer(border)
 
@@ -654,7 +653,7 @@ class StaffPanel(wx.Panel):
 
 
 class StudentForm(sc.SizedDialog):
-    def __init__(self, parent, title=''):
+    def __init__(self, parent, title=None):
         FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
         sc.SizedDialog.__init__(self, None, -1, title, style=FLAGS)
         cPane = self.GetContentsPane()
@@ -982,7 +981,7 @@ class StudentPanel(wx.Panel):
 
 
 class CourseForm(sc.SizedDialog):
-    def __init__(self, parent, title=''):
+    def __init__(self, parent, title=None):
         FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
         sc.SizedDialog.__init__(self, None, -1, title, style=FLAGS, size=(350, 500))
         cPane = self.GetContentsPane()
@@ -1261,7 +1260,7 @@ class AttendancePanel(wx.Panel):
 
 
 class PaymentForm(sc.SizedDialog):
-    def __init__(self, parent, title=''):
+    def __init__(self, parent, title=None):
         FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
         sc.SizedDialog.__init__(self, None, -1, title, style=FLAGS, size=(400, 450))
         cPane = self.GetContentsPane()
@@ -1550,7 +1549,7 @@ class FeePanel(wx.Panel):
 
 
 class ItemForm(sc.SizedDialog):
-    def __init__(self, parent, title=''):
+    def __init__(self, parent, title=None):
         FLAGS = (wx.CAPTION | wx.MINIMIZE_BOX | wx.CLOSE_BOX)
         sc.SizedDialog.__init__(self, None, -1, title, style=FLAGS, size=(350, 450))
         cPane = self.GetContentsPane()
@@ -1992,7 +1991,7 @@ class MailPad(sc.SizedDialog):
         sub_lbl = wx.StaticText(pane, -1, 'Subject')
         sub_lbl.SetFont(font)
 
-        self.subject = wx.TextCtrl(pane, -1, value='', style=wx.TE_PROCESS_ENTER)
+        self.subject = wx.TextCtrl(pane, -1, value=None, style=wx.TE_PROCESS_ENTER)
         self.subject.SetSizerProps(expand=True)
         self.subject.SetFont(font)
 
@@ -2137,8 +2136,8 @@ class SearchResultPanel(wx.Panel):
 
 class AppFrame(wx.Frame):
 
-    def __init__(self, parent, title=''):
-        FLAGS = (wx.FULL_REPAINT_ON_RESIZE |wx.MINIMIZE_BOX | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX | wx.FRAME_SHAPED)
+    def __init__(self, parent, title=None):
+        FLAGS = (wx.FULL_REPAINT_ON_RESIZE |wx.MINIMIZE_BOX | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX | wx.MAXIMIZE_BOX)
         super(AppFrame, self).__init__(parent=parent, title=title,  style=FLAGS)
         
         # Set an application icon
@@ -2157,7 +2156,7 @@ class AppFrame(wx.Frame):
 
         # Set Frame initial size and minimum frame size
         self.SetInitialSize((1200, 700))
-        self.SetMinSize((1200, 700))
+        # self.SetMinSize((1900, 700))
 
         self.center_panel = cpl = wx.Panel(pnl)      
 
@@ -2168,11 +2167,9 @@ class AppFrame(wx.Frame):
         self.toolbar = wx.ToolBar(cpl, style=wx.TB_VERTICAL | wx.TB_NODIVIDER)
         icon_size = (30, 30)
         
-        self.toolbar.AddTool(60, 'Menu', wx.Bitmap(IMGS.menu_drop), shortHelp='Menu')
-       
-        # Bind some event handlers to toolbar
-        # self.Bind(wx.EVT_TOOL, self.OnToolBarMenu, id=60)
-        # self.Bind(wx.EVT_TOOL_DROPDOWN, self.OnToolBarMenu, id=60)
+        self.toolbar.AddTool(60, 'Menu', wx.Bitmap(IMGS.menu_icon), shortHelp='Menu')
+        self.Bind(wx.EVT_TOOL, self.OnToolBarMenu, id=60)
+
         self.toolbar.SetToolBitmapSize(icon_size)
         self.toolbar.Realize()
 
@@ -2181,7 +2178,7 @@ class AppFrame(wx.Frame):
                     |wx.lib.agw.aui.auibook.AUI_NB_TAB_FIXED_WIDTH)
 
         self.nb = nb = agw.auibook.AuiNotebook(cpl, agwStyle=tab_style)
-        # nb.SetArtProvider(agw.AuiDefaultTabArt())
+        nb.SetArtProvider(agw.AuiDefaultTabArt())
 
         self.right_panel = rpnl = wx.Panel(pnl, style=wx.TAB_TRAVERSAL | wx.CLIP_CHILDREN)
         
@@ -2255,22 +2252,20 @@ class AppFrame(wx.Frame):
         self.mgr.Update()
 
         # Try to send all unsent sms
-        Controller.TextMessenger().send_unsent_sms()
-        
-        # Try to send all unsent emails 
-        # self.send_all_unsent_emails()
+        Controller.send_unsent_messages()
 
-        # If no user accounts exist then create one
         self.OnLogin()
         
     def OnLogin(self):
         """ Login page for users
         """
         self.users = Controller.Admin().get_count()
+
+        # If no user account exists then create one
         # if self.users == 0: 
             
         #     if self.OnCreateUser():
-        #         self.users = 1
+        #         self.users += 1
 
         #         dlg = LoginDialog(self, -1, 'Login')
         #         dlg.CentreOnScreen(wx.BOTH)
@@ -2319,24 +2314,32 @@ class AppFrame(wx.Frame):
     def OnToolBarMenu(self, event):
 
         if not hasattr(self, 'new_id'):
+            # We will use these later 
+
+            # self.staff_id = wx.NewIdRef()
+            # self.student_id = wx.NewIdRef()
+            # self.subject_id = wx.NewIdRef()
+            # self.fee_id = wx.NewIdRef()
+            # self.inventory_id = wx.NewIdRef()
+
+            self.email_id = wx.NewIdRef()
             self.sms_id = wx.NewIdRef()
             self.settings_id = wx.NewIdRef()
             self.logout_id = wx.NewIdRef()  
             self.info_id = wx.NewIdRef()
+            
+            # Bind to menu event handlers 
+            self.Bind(wx.EVT_MENU, self.OnMail, id=self.email_id)
+            self.Bind(wx.EVT_MENU, self.OnSms, id=self.sms_id) 
+            self.Bind(wx.EVT_MENU, self.OnSettings, id=self.settings_id)
+            self.Bind(wx.EVT_MENU, self.OnLogout, id=self.logout_id)
+            self.Bind(wx.EVT_MENU, self.OnInfo, self.info_id)
 
-            # self.Bind(wx.EVT_MENU, self.OnNewItem, id=self.new_id) 
-            # self.Bind(wx.EVT_MENU, self.OnRemoveItem, id=self.remove_id)
-            # self.Bind(wx.EVT_MENU, self.OnEditItem, id=self.edit_id)
-
-            # toolbar.AddTool(50, , wx.Bitmap(), shortHelp='.')
-            # toolbar.AddTool(70, 'Reports', wx.Bitmap(IMGS.reports), shortHelp='Generate Student Reports')
-            # toolbar.AddTool(30, , wx.Bitmap(IMGS.settings), shortHelp='')
-            # toolbar.AddTool(90, , wx.Bitmap(IMGS.logout), shortHelp='')
-            # toolbar.AddTool(80, 'Info', wx.Bitmap(), shortHelp='')
 
         menu = wx.Menu()
 
         menu_items = [
+            [self.email_id, 'Send an Email', IMGS.email],
             [self.sms_id, 'Send a text message', IMGS.sms],
             [self.settings_id, 'Edit user information', IMGS.settings], 
             [self.logout_id, 'Log out of Cranberry', IMGS.logout],
@@ -2357,10 +2360,10 @@ class AppFrame(wx.Frame):
         drop_icon = wx.Bitmap(IMGS.menu_drop)
         menu_icon = wx.Bitmap(IMGS.menu_icon)
 
-        self.toolbar.SetToolNormalBitmap(60, menu_icon)
+        self.toolbar.SetToolNormalBitmap(60, drop_icon)
         self.PopupMenu(menu)
         menu.Destroy()
-        self.toolbar.SetToolNormalBitmap(60, drop_icon)
+        self.toolbar.SetToolNormalBitmap(60, menu_icon)
         
     def OnSearch(self, event):
         search = Controller.Search().search
@@ -2555,10 +2558,10 @@ class AppFrame(wx.Frame):
             receiver = dialog.recipient.GetValue()
             body = dialog.body.GetValue()
             attachments = []
-            file = dialog.attach.GetValue()
-            attachments.append(file)
+            # file = dialog.attach.GetValue()
+            # attachments.append(file)
         
-            Controller.MailSender(receiver, subject, body, attachments)
+            Controller.MailMessenger(receiver, subject, body, attachments)
             notify = adv.NotificationMessage(
                 title="Email",
                 message="Mail sent to \n%s" % receiver,
