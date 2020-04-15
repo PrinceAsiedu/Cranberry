@@ -24,11 +24,11 @@ MAIL_TEMPLATE = 'data/mailtemplate.txt'
 os.system('')
 # Load some presets from the enviroment variables
 
-SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
-TWILIO_ACCOUNT_SID =  os.environ.get('TWILIO_ACCOUNT_SID') # Account Subscriber ID
-TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN') # Authentication Token
-TWILIO_NUMBER =  os.environ.get('TWILIO_NUMBER') # Twilio account number
-EMAIL_ADDR = os.environ.get('EMAIL_ADDR')
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY') 
+TWILIO_ACCOUNT_SID =  os.environ.get('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+TWILIO_NUMBER =  os.environ.get('TWILIO_NUMBER') 
+EMAIL_ADDR = 'prince14asiedu@gmail.com'#os.environ.get('EMAIL_ADDR')
 
 LOG_FILE = 'data/app_log.txt'
 LOG = Logger(LOG_FILE)
@@ -82,6 +82,7 @@ class Images():
 		self.stf_img = d+'staff_stat.png'
 		self.suj_img = d+'course_stat.png'
 		self.itm_img = d+'list_stat.png'
+		self.fee_img = d+'money.png'
 
 		# Staff Panel images 
 		self.staff_icon = d+'teacherout.png'
@@ -113,7 +114,7 @@ class Images():
 				
 
 class Student():
-	def __init__(self, fname=None, lname=None,sex=None,bd=None,parent=None,num=None,mail=None,addr=None,lvl=None, ste=None,adate=None):
+	def __init__(self, fname="", lname="",sex="",bd="",parent="",num="",mail="",addr="",lvl="", ste="",adate=""):
 		
 		self.fname = fname
 		self.lname = lname
@@ -164,8 +165,8 @@ class Student():
 		try: result = self.session().remove_a_student(sid)
 		except Exception as error: raise error
 	
-	def edit_student_data(self, sid, fname=None,lname=None,sex=None,bd=None,parent=None,
-				phone=None,email=None,addr=None,lvl=None, ste=None,adate=None):
+	def edit_student_data(self, sid, fname="",lname="",sex="",bd="",parent="",
+				phone="",email="",addr="",lvl="", ste="",adate=""):
 		try: 
 			if not bd == '':
 				bd = wxdate2pydate(bd) # date of birth
@@ -184,7 +185,7 @@ class Student():
 
 
 class Staff():
-	def __init__(self, fn=None, ln=None, sx=None, nm=None, em=None, ad=None, hd=None, lv=None, sy=None):
+	def __init__(self, fn="", ln="", sx="", nm="", em="", ad="", hd="", lv="", sy=""):
 		
 		self.fname = fn
 		self.lname = ln
@@ -229,7 +230,7 @@ class Staff():
 		try: result = self.session().remove_worker(wid)
 		except Exception as error: raise error
 
-	def edit_worker(self, wid, fn=None, ln=None, sx=None, nm=None, em=None, ad=None, hd=None, lv=None, sy=None):
+	def edit_worker(self, wid, fn="", ln="", sx="", nm="", em="", ad="", hd="", lv="", sy=""):
 		try: 
 			if not hd == '':
 				hd = wxdate2pydate(hd)
@@ -244,7 +245,7 @@ class Staff():
 
 
 class Courses():
-	def __init__(self, name=None, teacher=None, duration=None, level=None, price=None, status=None):
+	def __init__(self, name="", teacher="", duration="", level="", price="", status=""):
 
 		self.name = name 
 		self.teacher = teacher
@@ -281,7 +282,7 @@ class Courses():
 		except Exception as error: raise error
 		finally: return courses		
 
-	def edit_course(self, cid, name=None, teacher=None, duration=None, level=None, price=None, status=None):
+	def edit_course(self, cid, name="", teacher="", duration="", level="", price="", status=""):
 		try:
 			course = self.session()
 			course.modify_course_info(cid, name, teacher, duration, level, price, status)
@@ -298,7 +299,7 @@ class Courses():
 
 
 class Inventory():
-	def __init__(self, name=None,desc=None,qty=None,state=None, cost=None, total=None, discount=None, date=None):
+	def __init__(self, name="",desc="",qty="",state="", cost="", total="", discount="", date=""):
 
 		self.name = name
 		self.description = desc
@@ -363,7 +364,7 @@ class Inventory():
 
 class Fees():
 
-	def __init__(self, amt=None,pyr=None,rcv=None,ars=None,flp=None,dtp=None):
+	def __init__(self, amt="",pyr="",rcv="",ars="",flp="",dtp=""):
 
 		self.amount = amt
 		self.payer = pyr
@@ -376,9 +377,9 @@ class Fees():
 	
 	def make_payment(self):
 		try:
-			self.date_paid = wxdate2pydate(self.date_paid)
+			self.date_p = wxdate2pydate(self.date_paid)
 			new_fee = self.session(self.amount, self.payer, self.receiver, 
-								self.arrears, self.is_full_payment, self.date_paid)
+								self.arrears, self.is_full_payment, self.date_p)
 			new_fee.pay_fee()
 		
 		except Exception as error: raise error
@@ -390,7 +391,7 @@ class Fees():
 		except Exception as error: raise error
 	
 	def get_new_payment(self):
-		items = self.all_items()
+		items = self.all_fees()
 		item = items.pop()
 		return item
 
@@ -503,10 +504,11 @@ class Calendar():
 
 class TextMessenger():
 	
-	def __init__(self, rec=None, message=None):
+	def __init__(self, rec="", message=""):
 		self.__recipient = rec
 		self.msg = message
 		self.sent = False
+		self.type = 'sms'
 
 	def send(self):
 		"""Send the text message"""
@@ -523,7 +525,7 @@ class TextMessenger():
 				# Save the message in the database after sending.
 				time = datetime.now()
 				self.sent = True
-				save_msg(self.__recipient, self.msg, self.sent, time)
+				save_msg(self.__recipient, self.msg, self.sent, time, self.type)
 				
 				# log message sent event in log file
 				msg = 'Text message sent'
@@ -533,24 +535,25 @@ class TextMessenger():
 				msg = 'Text message not sent \n\t[%s]' % error
 				time = datetime.now()
 				LOG.error(msg, time)
-				self.save_msg(self.__recipient, self.msg, self.sent, time)
+				save_msg(self.__recipient, self.msg, self.sent, time, self.type)
 		
 		else: 
 			msg = 'Text message not sent [Failed to establish internet connection]' 
 			time = datetime.now()
 			LOG.warn(msg, time)
-			self.save_msg(self.sent, time)
+			save_msg(self.__recipient, self.msg, self.sent, time, self.type)
 
 
 class MailMessenger():
 
-	def __init__(self, receiver, subject, msg_body, attachments=None):
+	def __init__(self, receiver, subject, msg_body, attachments=""):
 	
 		self.subject = subject
 		self.__recipient = receiver
 		self.body = msg_body
 		self._from = EMAIL_ADDR
 		self.sent = False
+		self.type = 'email'
 
 		# TODO: Try to add attachments if necessary
 		# Write code to do that. 
@@ -577,7 +580,7 @@ class MailMessenger():
 			# Save the mail in the database after sending.
 			time = datetime.now()
 			self.sent = True
-			save_msg(self.__recipient, self.msg, self.sent, time)
+			save_msg(self.__recipient, self.body, self.sent, time, self.type)
 			
 			# log message sent event in log file
 			msg = 'Email sent'
@@ -587,7 +590,8 @@ class MailMessenger():
 			msg = 'Email not sent \n\t[%s]' % error
 			time = datetime.now()
 			LOG.error(msg, time)
-			self.save_msg(self.__recipient, self.msg, self.sent, time)
+			save_msg(self.__recipient, self.body, self.sent, time, self.type)
+			raise error
 
 
 def make_msg(subject, body):
@@ -596,7 +600,11 @@ def make_msg(subject, body):
 	text = open(MAIL_TEMPLATE, mode)
 	html = text.read()
 	text.close()
-	html = html.format(subject=subject,body=body) # message template
+	html = html.format(
+				preheader='Absolute Excelling College',
+				subject=subject,
+				body=body,
+				conclusion='Thank You') # message template
 	return html
 	
 def hash_password(passw):
@@ -614,7 +622,7 @@ def wxdate2pydate(date):
 				pytime = datetime.strptime(wxtime, '%d/%m/%y')
 				return pytime
 
-			else: return None
+			else: return ""
 		
 		except Exception as error: raise error
 
@@ -627,8 +635,8 @@ def _check_for_connection():
 	except Exception as error:
 		return flag
 
-def save_msg(rec, msg, status, time):
-	msg = model.MSG_Session(rec, msg, status, time)
+def save_msg(rec, msg, status, time, mtype):
+	msg = model.MSG_Session(rec, msg, status, time, mtype)
 	msg.create_msg()
 
 def send_unsent_messages():

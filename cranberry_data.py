@@ -1,14 +1,6 @@
 # cranberry_data.py
-
-# Don't forget to changes these details before
-# bundling the application
-
-
-# TODO: create message, calendar tables
-
-__version__ = "0.1"
-__date__ = "24-09-19"
-__author__ = "Prince O. Asiedu"
+# Author : Prince O. Asiedu
+# Date: March, 2020
 
 
 from datetime import datetime as dt
@@ -26,9 +18,8 @@ ENGINE = create_engine('sqlite:///data/cranberry.db', echo=False)
 
 
 def start_db_session():
-	Session = sessionmaker(bind=ENGINE)
+	Session = sessionmaker(bind=ENGINE, autoflush=False)
 	session = Session()
-	session.no_autoflush
 	return session
 
 def make_relationships():
@@ -141,7 +132,7 @@ class Staff(Base):
 
 class Staff_Session():
 
-	def __init__(self, fn=None, ln=None, sx=None, nm=None, em=None, ad=None, hd=date, lv=None, sy=None, session=__sess__):
+	def __init__(self, fn='', ln='', sx='', nm='', em='', ad='', hd=date, lv='', sy='', session=__sess__):
 		
 		self.firstname = fn
 		self.lastname = ln
@@ -237,8 +228,8 @@ class Students(Base):
 
 
 class Student_Session():
-	def __init__(self, firstname=None,lastname=None,gender=None, dob=date, guardian=None,
-			phone=None,email=None,address=None, level=None,stype=None,adm_date=date, session=__sess__):
+	def __init__(self, firstname='',lastname='',gender='', dob=date, guardian='',
+			phone='',email='',address='', level='',stype='',adm_date=date, session=__sess__):
 		
 		self.fname = firstname
 		self.lname = lastname
@@ -296,7 +287,7 @@ class Student_Session():
 
 		except Exception as error: raise error
 
-	def edit_student(self, sid, fe=None,le=None,gr=None, bd=None,gn=None,pe=None,el=None,ad=None,lv=None,st=None,ae=None):
+	def edit_student(self, sid, fe='',le='',gr='', bd='',gn='',pe='',el='',ad='',lv='',st='',ae=''):
 		try:
 			student = self.get_a_student(sid)
 
@@ -332,7 +323,7 @@ class Courses(Base):
 
 
 class Courses_Session():
-	def __init__(self, name=None,teacher=None, duration=None, level=None, price=None, status=None, session=__sess__):
+	def __init__(self, name='',teacher='', duration='', level='', price='', status='', session=__sess__):
 
 		self.name = name 
 		self.teacher = teacher
@@ -383,7 +374,7 @@ class Courses_Session():
 
 		except Exception as error: raise error
 
-	def modify_course_info(self, cid, name=None, teacher=None, duration=None, level=None, price=None , status=None):
+	def modify_course_info(self, cid, name='', teacher='', duration='', level='', price='' , status=''):
 		try:
 			course = self.get_a_course(cid)
 	
@@ -418,7 +409,7 @@ class Properties(Base):
 
 class Inventory_Session():
 
-	def __init__(self, n=None,d=None,q=None,s=None, c=None, tc=None, dc=None, pd=None, session=__sess__):
+	def __init__(self, n='',d='',q='',s='', c='', tc='', dc='', pd='', session=__sess__):
 		self.name = n
 		self.description = d
 		self.quantity = q
@@ -504,7 +495,7 @@ class Fees(Base):
 	fid = Column(Integer, primary_key=True)
 	amount = Column(Integer, nullable=False)
 	payer = Column(String, nullable=False)
-	reciever = Column(String, nullable=False)
+	receiver = Column(String, nullable=False)
 	arrears = Column(Integer, nullable=True)
 	full_payment = Column(String, nullable=False)
 	date_paid = Column(DateTime, nullable=False)
@@ -512,7 +503,7 @@ class Fees(Base):
 
 class Fee_Session():
 
-	def __init__(self,amt=None,pyr=None,rcv=None,ars=None,flp=None,dtp=None, session=__sess__):
+	def __init__(self,amt='',pyr='',rcv='',ars='',flp='',dtp='', session=__sess__):
 		self.amount = amt
 		self.payer = pyr
 		self.receiver = rcv
@@ -605,7 +596,7 @@ class MSG_Session():
 	"""
 	Text message and E-mail object
 	"""
-	def __init__(self, rec=None, msg=None, sts=None, time=None, mtype =None, session=__sess__):
+	def __init__(self, rec='', msg='', sts='', time='', mtype ='', session=__sess__):
 		self.recipient = rec
 		self.message = msg
 		self.status = sts
@@ -635,7 +626,9 @@ class MSG_Session():
 		except Exception as error: raise error
 
 	def get_all_msgs(self):
-		try: msgs = self.session.query(Message).all(); return msgs
+		try: 
+			msgs = self.session.query(Message).all()
+			return msgs
 		except Exception as error: raise error
 
 	def delete_msg(self, mid):
@@ -648,7 +641,7 @@ class MSG_Session():
 			self.session().rollback()
 			raise error
 
-	def update_msg(self, mid, status=None, time=None):
+	def update_msg(self, mid, status='', time=''):
 		try:
 			msg = self.get_msg(mid)
 			if status: msg.status = status
@@ -712,9 +705,9 @@ def search(keyword):
 	
 	finally: del items, students, staff ; return results	
 	
-
 def main():
-	create_db()
+	# create_db()
+	__sess__.rollback()
 	pass
 	
 

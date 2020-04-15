@@ -3,3 +3,59 @@
 Text message not sent [Failed to establish internet connection]
 Datetime: 2020-03-03 16:31:49.213531
 
+[ERROR]
+
+Email not sent 
+	[HTTP Error 400: Bad Request]
+Datetime: 2020-03-11 01:12:45.461402
+
+[ERROR]
+
+Email not sent 
+	[HTTP Error 400: Bad Request]
+Datetime: 2020-03-11 01:15:32.015712
+
+[ERROR]
+
+Email not sent 
+	[HTTP Error 400: Bad Request]
+Datetime: 2020-03-11 21:29:23.486655
+
+[ERROR]
+
+Email not sent 
+	[HTTP Error 400: Bad Request]
+Datetime: 2020-03-12 00:04:20.830990
+
+[ERROR]
+
+Email not sent 
+	[HTTP Error 400: Bad Request]
+Datetime: 2020-03-12 00:06:11.259409
+
+[INFO]
+
+Email sent
+Datetime: 2020-03-12 00:11:02.568801
+
+[INFO]
+
+Email sent
+Datetime: 2020-03-12 00:16:09.571702
+
+[ERROR]
+
+Email not sent 
+	[HTTP Error 400: Bad Request]
+Datetime: 2020-03-12 00:20:33.461981
+
+[INFO]
+
+Email sent
+Datetime: 2020-03-12 00:27:35.825962
+
+[INFO]
+
+Email sent
+Datetime: 2020-03-12 00:30:44.933000
+
