@@ -1,11 +1,14 @@
-# -----------
-# to-do list
-# -----------
-# TODO: create a theaded server process to handle message sending and receiving
-# TODO: Create printing system
-# TODO: Add a report generation feature
 
-from cranerror import AuthenticationError, UserNotFound
+
+__software__ = 'Cranberry School Management System'
+__version__  = "1.5"
+__date__     = "March, 2020"
+__author__   = "Prince Oforh Asiedu"
+__email__    = "prince14asiedu@gmail.com"
+__copyright__ = "(c) Prince Oforh Asiedu 2020"
+
+
+from cranerror import *
 import cranberry_logic as Controller
 from wx.lib.wordwrap import wordwrap
 from wx.lib.platebtn import PlateButton as pbtn
@@ -20,35 +23,22 @@ from datetime import datetime
 import time
 import string
 
-software = 'Cranberry School Management System'
-__version__ = "1.5"
-__date__ = "March, 2020"
-__author__ = "Prince Oforh Asiedu"
-__email__ = "prince14asiedu@gmail.com"
-__copyright__ = "(c) Prince Oforh Asiedu 2020"
 
-# imports from Python's standard library
-
-# imports from the wxPython library for the GUI
-
-# Helper modules i conjured ('Oh fluffy!!!')
-
-ALPHA_NUM = 1
+ALPHA_NUM  = 1
 ALPHA_ONLY = 2
 DIGIT_ONLY = 3
-PRINTABLE = 4
+PRINTABLE  = 4
 
 IMGS = Controller.Images()
-
 APP_ICON = IMGS.icon
-
 MENU_BG = 'grey20'
 MENU_FG = 'white'
 
 
 class TextCtrlValidator(wx.Validator):
-    """ This validator is used to ensure that the user has entered 
-        something into text fields in dialog box.
+    """ 
+    This validator is used to ensure that the user has entered 
+    something into text fields in dialog box.
     """
 
     def __init__(self, flag=None, pyVar=None):
@@ -227,7 +217,7 @@ class HomePanel(wx.Panel):
 
         stf_box = wx.BoxSizer(wx.VERTICAL)
         stu_box = wx.BoxSizer(wx.VERTICAL)
-        cse_box = wx.BoxSizer(wx.VERTICAL)
+        # cse_box = wx.BoxSizer(wx.VERTICAL)
         itm_box = wx.BoxSizer(wx.VERTICAL)
         fee_box = wx.BoxSizer(wx.VERTICAL)
 
@@ -279,52 +269,28 @@ class HomePanel(wx.Panel):
 
         stf_body.AddMany(stf_ctrls)
 
-        # Courses heading
-        cse_head_box = wx.BoxSizer(wx.HORIZONTAL)
-        cse_txt = wx.StaticText(self, -1, 'Subjects')
-        cse_txt.SetFont(FONT)
-        cse_txt.SetForegroundColour('grey35')
-        cse_head_box.Add(cse_txt, 1, wx.ALL, 2)
-
-        # Courses statistic body
-        cse_body = wx.BoxSizer(wx.HORIZONTAL)
-
-        cse_bmp = wx.StaticBitmap(self, -1, wx.Bitmap(IMGS.suj_img))
-        self.cse_stat = wx.StaticText(self, -1, str(Controller.Courses(
-        ).course_total()), style=wx.ALIGN_CENTRE_HORIZONTAL | wx.ST_NO_AUTORESIZE)
-        self.cse_stat.SetFont(FONT_SMALL)
-        self.cse_stat.SetForegroundColour('grey35')
-        self.cse_stat.SetBackgroundColour('gainsboro')
-
-        cse_ctrls = [
-            (cse_bmp, 1, wx.ALL, 10),
-            (self.cse_stat, 1, wx.ALL | wx.ALIGN_CENTER, 10),
-        ]
-
-        cse_body.AddMany(cse_ctrls)
-
         # Items heading
-        # itm_head_box = wx.BoxSizer(wx.HORIZONTAL)
-        # itm_txt = wx.StaticText(self, -1, 'Inventory')
-        # itm_txt.SetFont(FONT)
-        # itm_txt.SetForegroundColour('grey35')
-        # itm_head_box.Add(itm_txt, 1, wx.ALL, 2)
+        itm_head_box = wx.BoxSizer(wx.HORIZONTAL)
+        itm_txt = wx.StaticText(self, -1, 'Inventory')
+        itm_txt.SetFont(FONT)
+        itm_txt.SetForegroundColour('grey35')
+        itm_head_box.Add(itm_txt, 1, wx.ALL, 2)
 
         # # Items statistic body
-        # itm_body = wx.BoxSizer(wx.HORIZONTAL)
+        itm_body = wx.BoxSizer(wx.HORIZONTAL)
 
-        # itm_bmp = wx.StaticBitmap(self, -1, wx.Bitmap(IMGS.itm_img))
-        # self.itm_stat = wx.StaticText(self, -1, str(Controller.Inventory().item_total()), style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
-        # self.itm_stat.SetFont(FONT_SMALL)
-        # self.itm_stat.SetForegroundColour('grey35')
-        # self.itm_stat.SetBackgroundColour('gainsboro')
+        itm_bmp = wx.StaticBitmap(self, -1, wx.Bitmap(IMGS.itm_img))
+        self.itm_stat = wx.StaticText(self, -1, str(Controller.Inventory().item_total()), style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
+        self.itm_stat.SetFont(FONT_SMALL)
+        self.itm_stat.SetForegroundColour('grey35')
+        self.itm_stat.SetBackgroundColour('gainsboro')
 
-        # itm_ctrls = [
-        #     (itm_bmp, 1, wx.ALL, 10),
-        #     (self.itm_stat, 1, wx.ALL|wx.ALIGN_CENTER, 10),
-        # ]
+        itm_ctrls = [
+            (itm_bmp, 1, wx.ALL, 10),
+            (self.itm_stat, 1, wx.ALL|wx.ALIGN_CENTER, 10),
+        ]
 
-        # itm_body.AddMany(itm_ctrls)
+        itm_body.AddMany(itm_ctrls)
 
         # Fees heading
         fee_head_box = wx.BoxSizer(wx.HORIZONTAL)
@@ -356,11 +322,11 @@ class HomePanel(wx.Panel):
         stf_box.Add(stf_head_box, 1, wx.LEFT | wx.RIGHT, 15)
         stf_box.Add(stf_body)
 
-        cse_box.Add(cse_head_box, 1, wx.LEFT | wx.RIGHT, 15)
-        cse_box.Add(cse_body)
+        # cse_box.Add(cse_head_box, 1, wx.LEFT | wx.RIGHT, 15)
+        # cse_box.Add(cse_body)
 
-        # itm_box.Add(itm_head_box, 1, wx.LEFT|wx.RIGHT, 15)
-        # itm_box.Add(itm_body)
+        itm_box.Add(itm_head_box, 1, wx.LEFT|wx.RIGHT, 15)
+        itm_box.Add(itm_body)
 
         fee_box.Add(fee_head_box, 1, wx.LEFT | wx.RIGHT, 15)
         fee_box.Add(fee_body)
@@ -369,11 +335,11 @@ class HomePanel(wx.Panel):
         statistic_box.Add(wx.StaticLine(self, -1, size=(1, 120),
                                         style=wx.LI_VERTICAL), 0, wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER, 10)
         statistic_box.Add(stf_box, 1, wx.LEFT, 20)
-        statistic_box.Add(wx.StaticLine(self, -1, size=(1, 120),
-                                        style=wx.LI_VERTICAL), 0, wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER, 10)
-        statistic_box.Add(cse_box, 1, wx.LEFT, 20)
-        # statistic_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
-        # statistic_box.Add(itm_box, 1, wx.LEFT, 20)
+        # statistic_box.Add(wx.StaticLine(self, -1, size=(1, 120),
+        #                                 # style=wx.LI_VERTICAL), 0, wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER, 10)
+        # statistic_box.Add(cse_box, 1, wx.LEFT, 20)
+        statistic_box.Add(wx.StaticLine(self, -1, size=(1, 120), style=wx.LI_VERTICAL), 0, wx.RIGHT|wx.LEFT|wx.ALIGN_CENTER, 10)
+        statistic_box.Add(itm_box, 1, wx.LEFT, 20)
         statistic_box.Add(wx.StaticLine(self, -1, size=(1, 120),
                                         style=wx.LI_VERTICAL), 0, wx.RIGHT | wx.LEFT | wx.ALIGN_CENTER, 10)
         statistic_box.Add(fee_box, 1, wx.LEFT, 20)
@@ -2342,7 +2308,7 @@ class AppFrame(wx.Frame):
             (self.home, "Home", wx.Bitmap(IMGS.home_icon)),
             (StaffPanel(nb, self.home), "Staff", wx.Bitmap(IMGS.staff_icon)),
             (StudentPanel(nb, self.home), "Student", wx.Bitmap(IMGS.student_icon)),
-            (CoursePanel(nb, self.home), "Subjects", wx.Bitmap(IMGS.subject_icon)),
+            # (CoursePanel(nb, self.home), "Subjects", wx.Bitmap(IMGS.subject_icon)),
             # (AttendancePanel(nb, self.home), "Attendance", wx.Bitmap(IMGS.attendance_icon)),
             (FeePanel(nb, self.home), "Fees", wx.Bitmap(IMGS.fee_icon)),
             (InventoryPanel(nb, self.home), "Inventory",
@@ -2862,7 +2828,6 @@ class AppObject(wx.App):
 def main():
     app = AppObject(False)
     app.MainLoop()
-
 
 if __name__ == '__main__':
     main()

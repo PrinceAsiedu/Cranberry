@@ -1,0 +1,17 @@
+# -----------
+# to-do list
+# -----------
+
+[Done]: Remove subjects statistic box from homepage
+[Done]: Remove subjects panel from panels 
+[Done]: Replace subjects statistic box with inventory box
+
+[TODO]: Create printing system
+[TODO]: Make changes to staff data composition 
+[TODO]: Add sms broadcast feature
+[TODO]: Add grading system 
+[TODO]: Add task queuing feature for unsent messages 
+[TODO]: Add pdf generation
+[TODO]: Implement setting enviromental variables at app startup and shutdown
+[TODO]: create a theaded server process to handle message sending and receiving
+[TODO]: Add student, subject, item, and employee creation buttons to menu

@@ -1,3 +1,6 @@
+# logger.py
+# Author : Prince O. Asiedu
+# Date: April, 2020
 
 class Logger(object):
     """A file-based message logger with the following properties 
