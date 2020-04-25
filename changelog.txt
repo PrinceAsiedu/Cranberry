@@ -15,3 +15,5 @@
 [TODO]: Implement setting enviromental variables at app startup and shutdown
 [TODO]: create a theaded server process to handle message sending and receiving
 [TODO]: Add student, subject, item, and employee creation buttons to menu
+[TODO]: Encrypt and decrypt text messages during storage and retrieval in/from database
+[TODO]: Make dropdown list of subjects during staff creation

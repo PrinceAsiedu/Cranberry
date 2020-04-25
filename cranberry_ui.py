@@ -24,10 +24,21 @@ import time
 import string
 
 
+# Some app ids
 ALPHA_NUM  = 1
 ALPHA_ONLY = 2
 DIGIT_ONLY = 3
 PRINTABLE  = 4
+TBMENU_RESTORE = 110
+TBMENU_CLOSE = 120
+TBMENU_REMOVE = 130
+EMAIL_ID = 140
+SMS_ID = 150
+USER_SETTINGS_ID = 160
+LOGOUT_ID = 170
+APP_INFO_ID = 180
+HELP_ID = 190
+ABOUT_ID = 200
 
 IMGS = Controller.Images()
 APP_ICON = IMGS.icon
@@ -101,7 +112,7 @@ class TextCtrlValidator(wx.Validator):
             event.Skip()
             return
 
-        if self.flag == DIGIT_ONLY and chr(key) in string.digits:
+        if self.flag == DIGIT_ONLY and chr(key) in string.digits+'.':
             event.Skip()
             return
 
@@ -636,9 +647,9 @@ class StaffPanel(wx.Panel):
 
     def OnContextMenu(self, event):
         if not hasattr(self, 'new_id'):
-            self.new_id = wx.NewIdRef()
-            self.edit_id = wx.NewIdRef()
-            self.remove_id = wx.NewIdRef()
+            self.new_id = 1100
+            self.edit_id = 1200
+            self.remove_id = 1300
             self.Bind(wx.EVT_MENU, self.OnNewStaff, id=self.new_id)
             self.Bind(wx.EVT_MENU, self.OnRemoveStaff, id=self.remove_id)
             self.Bind(wx.EVT_MENU, self.OnEditEmployee, id=self.edit_id)
@@ -987,9 +998,9 @@ class StudentPanel(wx.Panel):
 
     def OnContextMenu(self, event):
         if not hasattr(self, 'new_id'):
-            self.new_id = wx.NewIdRef()
-            self.edit_id = wx.NewIdRef()
-            self.remove_id = wx.NewIdRef()
+            self.new_id = 1100
+            self.edit_id = 1200
+            self.remove_id = 1300
             self.Bind(wx.EVT_MENU, self.OnNewStudent, id=self.new_id)
             self.Bind(wx.EVT_MENU, self.OnRemoveStudent, id=self.remove_id)
             self.Bind(wx.EVT_MENU, self.OnEditStudent, id=self.edit_id)
@@ -1277,9 +1288,9 @@ class CoursePanel(wx.Panel):
 
     def OnContextMenu(self, event):
         if not hasattr(self, 'new_id'):
-            self.new_id = wx.NewIdRef()
-            self.edit_id = wx.NewIdRef()
-            self.remove_id = wx.NewIdRef()
+            self.new_id = 1100
+            self.edit_id = 1200
+            self.remove_id = 1300
             self.Bind(wx.EVT_MENU, self.OnNewCourse, id=self.new_id)
             self.Bind(wx.EVT_MENU, self.OnRemoveCourse, id=self.remove_id)
             self.Bind(wx.EVT_MENU, self.OnEditCourse, id=self.edit_id)
@@ -1589,9 +1600,9 @@ class FeePanel(wx.Panel):
 
     def OnContextMenu(self, event):
         if not hasattr(self, 'new_id'):
-            self.new_id = wx.NewIdRef()
-            self.edit_id = wx.NewIdRef()
-            self.remove_id = wx.NewIdRef()
+            self.new_id = 1100
+            self.edit_id = 1200
+            self.remove_id = 1300
             self.Bind(wx.EVT_MENU, self.OnMakePayment, id=self.new_id)
             self.Bind(wx.EVT_MENU, self.OnErasePayment, id=self.remove_id)
             self.Bind(wx.EVT_MENU, self.OnEditPayment, id=self.edit_id)
@@ -1905,9 +1916,9 @@ class InventoryPanel(wx.Panel):
 
     def OnContextMenu(self, event):
         if not hasattr(self, 'new_id'):
-            self.new_id = wx.NewIdRef()
-            self.edit_id = wx.NewIdRef()
-            self.remove_id = wx.NewIdRef()
+            self.new_id = 1100
+            self.edit_id = 1200
+            self.remove_id = 1300
             self.Bind(wx.EVT_MENU, self.OnNewItem, id=self.new_id)
             self.Bind(wx.EVT_MENU, self.OnRemoveItem, id=self.remove_id)
             self.Bind(wx.EVT_MENU, self.OnEditItem, id=self.edit_id)
@@ -1977,10 +1988,7 @@ class StatBar(wx.StatusBar):
 
 
 class CranTaskBarIcon(adv.TaskBarIcon):
-    TBMENU_RESTORE = wx.NewIdRef()
-    TBMENU_CLOSE = wx.NewIdRef()
-    TBMENU_REMOVE = wx.NewIdRef()
-
+    
     def __init__(self, frame):
         super(CranTaskBarIcon, self).__init__(adv.TBI_DOCK)
         self.frame = frame
@@ -2441,29 +2449,23 @@ class AppFrame(wx.Frame):
 
     def OnToolBarMenu(self, event):
 
-        if not hasattr(self, 'new_id'):
-
-            self.email_id = wx.NewIdRef()
-            self.sms_id = wx.NewIdRef()
-            self.settings_id = wx.NewIdRef()
-            self.logout_id = wx.NewIdRef()
-            self.info_id = wx.NewIdRef()
+        if not hasattr(self, 'EMAIL_ID'):
 
             # Bind to menu event handlers
-            self.Bind(wx.EVT_MENU, self.OnMail, id=self.email_id)
-            self.Bind(wx.EVT_MENU, self.OnSms, id=self.sms_id)
-            self.Bind(wx.EVT_MENU, self.OnSettings, id=self.settings_id)
-            self.Bind(wx.EVT_MENU, self.OnLogout, id=self.logout_id)
-            self.Bind(wx.EVT_MENU, self.OnInfo, self.info_id)
+            self.Bind(wx.EVT_MENU, self.OnMail, id=EMAIL_ID)
+            self.Bind(wx.EVT_MENU, self.OnSms, id=SMS_ID)
+            self.Bind(wx.EVT_MENU, self.OnSettings, id=USER_SETTINGS_ID)
+            self.Bind(wx.EVT_MENU, self.OnLogout, id=LOGOUT_ID)
+            self.Bind(wx.EVT_MENU, self.OnInfo, id=APP_INFO_ID)
 
         menu = wx.Menu()
 
         menu_items = [
-            [self.email_id, 'Send an Email', IMGS.email],
-            [self.sms_id, 'Send a text message', IMGS.sms],
-            [self.settings_id, 'Edit user information', IMGS.settings],
-            [self.logout_id, 'Log out of Cranberry', IMGS.logout],
-            [self.info_id, 'Program Information', IMGS.info]
+            [EMAIL_ID, 'Send an Email', IMGS.email],
+            [SMS_ID, 'Send a text message', IMGS.sms],
+            [USER_SETTINGS_ID, 'Edit user information', IMGS.settings],
+            [LOGOUT_ID, 'Log out of Cranberry', IMGS.logout],
+            [APP_INFO_ID, 'Program Information', IMGS.info]
         ]
 
         for item in menu_items:
@@ -2495,9 +2497,9 @@ class AppFrame(wx.Frame):
     def OnSettings(self, event):
         self.users = Controller.Admin().get_count()
         if not hasattr(self, 'new_id'):
-            self.new_id = wx.NewIdRef()
-            self.edit_id = wx.NewIdRef()
-            self.remove_id = wx.NewIdRef()
+            self.new_id = 1100
+            self.edit_id = 1200
+            self.remove_id = 1300
             self.Bind(wx.EVT_MENU, self.OnCreateUser, id=self.new_id)
             self.Bind(wx.EVT_MENU, self.OnRemoveUser, id=self.remove_id)
             self.Bind(wx.EVT_MENU, self.OnEditUser, id=self.edit_id)
@@ -2732,17 +2734,16 @@ class AppFrame(wx.Frame):
         self.Destroy()
 
     def OnInfo(self, event):
-        if not hasattr(self, 'help'):
-            self.help_id = wx.NewIdRef()
-            self.about_id = wx.NewIdRef()
-            self.Bind(wx.EVT_MENU, self.OnManual, id=self.help_id)
-            self.Bind(wx.EVT_MENU, self.OnAboutApp, id=self.about_id)
+        if not hasattr(self, 'HELP_ID'):
+            
+            self.Bind(wx.EVT_MENU, self.OnManual, id=HELP_ID)
+            self.Bind(wx.EVT_MENU, self.OnAboutApp, id=ABOUT_ID)
 
         menu = wx.Menu()
 
         menu_items = [
-            [self.help_id, 'Help', IMGS.help],
-            [self.about_id, 'About Cranberry', IMGS.about]
+            [HELP_ID, 'Help', IMGS.help],
+            [ABOUT_ID, 'About Cranberry', IMGS.about]
         ]
 
         for item in menu_items:
@@ -2820,8 +2821,8 @@ class AppObject(wx.App):
         self.SetAppName("Cranberry")
 
         # App initialization screen
-        # CranberryInitScreen()
-        frame = AppFrame(None, title='Cranberry')
+        CranberryInitScreen()
+        # frame = AppFrame(None, title='Cranberry')
         return True
 
 
