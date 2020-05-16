@@ -1,6 +1,6 @@
 # cranberry_data.py
 # Author : Prince O. Asiedu
-# Date: April, 2020
+# Date: May, 2020
 
 
 from datetime import datetime as dt

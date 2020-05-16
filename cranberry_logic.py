@@ -1,6 +1,6 @@
 # cranberry_logic.py
 # Author : Prince O. Asiedu
-# Date: March, 2020
+# Date: May, 2020
 
 import os
 import wx

@@ -1,6 +1,6 @@
 # cranerror.py
 # Author : Prince O. Asiedu
-# Date: April, 2020
+# Date: May, 2020
 
 class CranError(Exception):
 	'''Base class for Cranberry Application errors'''

@@ -1,10 +1,10 @@
 
 
 __software__ = 'Cranberry School Management System'
-__version__  = "1.5"
-__date__     = "March, 2020"
-__author__   = "Prince Oforh Asiedu"
-__email__    = "prince14asiedu@gmail.com"
+__version__   = "1.5"
+__date__      = "May, 2020"
+__author__    = "Prince Oforh Asiedu"
+__email__     = "prince14asiedu@gmail.com"
 __copyright__ = "(c) Prince Oforh Asiedu 2020"
 
 
@@ -305,7 +305,7 @@ class HomePanel(wx.Panel):
 
         # Fees heading
         fee_head_box = wx.BoxSizer(wx.HORIZONTAL)
-        fee_txt = wx.StaticText(self, -1, 'Fees')
+        fee_txt = wx.StaticText(self, -1, 'Fees Collected')
         fee_txt.SetFont(FONT)
         fee_txt.SetForegroundColour('grey35')
         fee_head_box.Add(fee_txt, 1, wx.ALL, 2)
@@ -2282,7 +2282,7 @@ class AppFrame(wx.Frame):
 
         # Set Frame initial size and minimum frame size
         self.SetInitialSize((1350, 650))
-        # self.SetMinSize((1900, 1200))
+        self.SetMinSize((1000, 650))
 
         self.center_panel = cpl = wx.Panel(pnl)
 
@@ -2821,8 +2821,8 @@ class AppObject(wx.App):
         self.SetAppName("Cranberry")
 
         # App initialization screen
-        CranberryInitScreen()
-        # frame = AppFrame(None, title='Cranberry')
+        # CranberryInitScreen()
+        frame = AppFrame(None, title='Cranberry')
         return True
 
 
