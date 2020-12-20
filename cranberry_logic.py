@@ -1,4 +1,3 @@
-# cranberry_logic.py
 # Author : Prince O. Asiedu
 # Date: May, 2020
 
